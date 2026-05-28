@@ -27,10 +27,6 @@
         .sys-log { color: #6b7280; }
         .sys-err { color: #f87171; }
     </style>
-    <!-- EMBEDDED CORES: Injecting full Eclipse Paho MQTT runtime core framework into browser memory storage directly -->
-    <script type="text/javascript">
-        !function(e){"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():"function"==typeof define&&define.amd?define([],e):("undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof self?self:this).Paho=e()}(function(){return function e(t,n,r){function o(i,as){if(!n[i]){if(!t[i]){var u="function"==typeof require&&require;if(!as&&u)return u(i,!0);if(s)return s(i,!0);var f=new Error("Cannot find module '"+i+"'");throw f.code="MODULE_NOT_FOUND",f}var a=n[i]={exports:{}};t[i].call(a.exports,function(e){var n=t[i][e];return o(n?n:e)},a,a.exports,e,t,n,r)}return n[i].exports}for(var s="function"==typeof require&&require,i=0;i<r.length;i++)o(r[i]);return o}({1:[function(e,t,n){(function(r){"use strict";var o=function(){function e(e,t,n){this.host=e,this.port=Number(t),this.clientId=n,this.trace=!1,this.onConnectionLost=null,this.onMessageArrived=null,this._socket=null,this._connected=!1}return e.prototype.connect=function(e){var t=this,n="wss://"+this.host+":"+this.port+(e.path||"/mqtt");this._socket=new WebSocket(n,["mqtt"]),this._socket.binaryType="arraybuffer",this._socket.onopen=function(){var n=t._buildConnectPacket(e);t._socket.send(n)},this._socket.onmessage=function(n){t._handlePacket(new Uint8Array(n.data),e)},this._socket.onclose=function(){t._connected=!1,t.onConnectionLost&&t.onConnectionLost({errorCode:1,errorMessage:"Lost connection to cluster"})},this._socket.onerror=function(e){t._connected=!1}},e.prototype.subscribe=function(e){var t=new Uint8Array([130,2+2+e.length+1,0,1,0,e.length]);const n=new TextEncoder().encode(e);const r=new Uint8Array(t.length+n.length+1);r.set(t,0),r.set(n,t.length),r[r.length-1]=0,this._socket.send(r)},e.prototype._buildConnectPacket=function(e){var t=new TextEncoder(),n=t.encode(e.userName),r=t.encode(e.password),o=t.encode(this.clientId),s=12+(2+o.length)+(2+n.length)+(2+r.length),i=new Uint8Array(2+s),as=0;return i[as++]=16,i[as++]=s,i[as++]=0,i[as++]=4,i[as++]=77,i[as++]=81,i[as++]=84,i[as++]=84,i[as++]=4,i[as++]=194,i[as++]=0,i[as++]=60,i[as++]=o.length>>8,i[as++]=255&o.length,i.set(o,as),as+=o.length,i[as++]=n.length>>8,i[as++]=255&n.length,i.set(n,as),as+=n.length,i[as++]=r.length>>8,i[as++]=255&r.length,i.set(r,as),as+=r.length,i},e.prototype._handlePacket=function(e,t){var n=e>>4;if(2===n)this._connected=!0,t.onSuccess&&t.onSuccess();else if(3===n){var r=1,o=1,s=0;do{s+=(127&e[r])*o,o*=128}while(0!=(128&e[r++]));var i=(e[r++]<<8)+e[r++];r+=i;var as=e.subarray(r,r+(s-(r-2)));this.onMessageArrived&&this.onMessageArrived({payloadBytes:as})}},e}();n.MQTT={Client:o}}).call(this,void 0)},{}]},{},)(1)});
-    </script>
 </head>
 <body>
 
@@ -43,7 +39,7 @@
         <div id="status_bar" class="status-bar">
             <div class="status-left">
                 <div id="status_dot" class="dot"></div>
-                <span id="status_text">Status: Initializing Dashboard Engine...</span>
+                <span id="status_text">Status: Initializing Dashboard Tunnel Engine...</span>
             </div>
             <span id="live_clock" class="clock">00:00:00 AM</span>
         </div>
@@ -75,71 +71,137 @@
         const statusDot = document.getElementById('status_dot');
         const statusText = document.getElementById('status_text');
 
-        let client;
+        let ws;
+        let pingInterval;
 
-        function initMQTT() {
-            appendLine("SYSTEM LOG: Self-contained secure library loaded.", "sys-log");
-            appendLine("SYSTEM LOG: Launching handshake with HiveMQ Cloud...", "sys-log");
+        function initNativeMQTT() {
+            appendLine("SYSTEM LOG: Activating self-contained local connector...", "sys-log");
+            appendLine("SYSTEM LOG: Launching secure tunnel to HiveMQ Cloud cluster...", "sys-log");
+
+            const connectionUrl = `wss://${BROKER_HOST}:${WEBSOCKET_PORT}/mqtt`;
             
-            // Initialize embedded client framework cleanly
-            client = new Paho.MQTT.Client(BROKER_HOST, Number(WEBSOCKET_PORT), "WebClient_" + Math.floor(Math.random() * 100));
+            ws = new WebSocket(connectionUrl, ["mqtt"]);
+            ws.binaryType = "arraybuffer";
 
-            client.onConnectionLost = onConnectionLost;
-            client.onMessageArrived = onMessageArrived;
-
-            const connectOptions = {
-                onSuccess: onConnectSuccess,
-                onFailure: onConnectFailure,
-                userName: MQTT_USER,
-                password: MQTT_PASS,
-                path: "/mqtt"
+            ws.onopen = () => {
+                appendLine("SYSTEM LOG: Socket channel opened. Handshaking authorization frames...", "sys-log");
+                setTimeout(sendMqttConnectPacket, 150);
             };
 
-            client.connect(connectOptions);
+            ws.onmessage = (event) => {
+                const payload = new Uint8Array(event.data);
+                if (payload.length === 0) return;
+
+                const packetType = payload[0] >> 4;
+
+                // 2 = CONNACK (Handshake approved!)
+                if (packetType === 2) {
+                    if (payload[3] === 0) { // Connection accepted check
+                        statusBar.classList.add('connected');
+                        statusDot.classList.add('connected');
+                        statusText.innerText = `Connected: Listening live on [${TOPIC_SUBSCRIBE}]`;
+                        appendLine("SYSTEM LOG: Authorization Approved! Tunnel completely open.", "sys-log");
+                        
+                        sendMqttSubscribePacket();
+                        
+                        clearInterval(pingInterval);
+                        pingInterval = setInterval(sendMqttPingPacket, 20000);
+                    } else {
+                        appendLine(`CRITICAL ERROR: Authorization Denied. Error code: ${payload[3]}`, "sys-err");
+                    }
+                }
+
+                // 3 = PUBLISH packet (ESP32 telemetry received!)
+                if (packetType === 3) {
+                    let idx = 1;
+                    let remLen = 0;
+                    let multiplier = 1;
+
+                    do {
+                        remLen += (payload[idx] & 127) * multiplier;
+                        multiplier *= 128;
+                    } while ((payload[idx++] & 128) !== 0);
+
+                    const topicLen = (payload[idx++] << 8) + payload[idx++];
+                    idx += topicLen; 
+
+                    const rawDataBytes = payload.subarray(idx);
+                    if (rawDataBytes.length === 0) return;
+
+                    const timeStr = new Date().toLocaleTimeString();
+
+                    const hexColumn = Array.from(rawDataBytes).map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+                    const asciiColumn = Array.from(rawDataBytes).map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.').join('');
+
+                    const completeRow = `[${timeStr}] \nHEX:   ${hexColumn}\nASCII: ${asciiColumn}\n--------------------------------------------------------------`;
+                    appendLine(completeRow, "");
+                }
+            };
+
+            ws.onclose = () => {
+                clearInterval(pingInterval);
+                statusBar.classList.remove('connected');
+                statusDot.classList.remove('connected');
+                statusText.innerText = "Status: Connection Closed. Auto-reconnecting...";
+                setTimeout(initNativeMQTT, 4000); 
+            };
+
+            ws.onerror = (err) => {
+                console.error("Socket Exception Trace: ", err);
+            };
         }
 
-        function onConnectSuccess() {
-            statusBar.classList.add('connected');
-            statusDot.classList.add('connected');
-            statusText.innerText = `Connected: Listening live on [${TOPIC_SUBSCRIBE}]`;
-            appendLine("SYSTEM LOG: Authorization Approved! Dashboard linked successfully.", "sys-log");
+        function sendMqttConnectPacket() {
+            const clientID = "WebClient" + Math.floor(Math.random() * 1000);
+            const encoder = new TextEncoder();
+            const bCid = encoder.encode(clientID);
+            const bUser = encoder.encode(MQTT_USER);
+            const bPass = encoder.encode(MQTT_PASS);
 
-            client.subscribe(TOPIC_SUBSCRIBE);
+            const remLen = 12 + (2 + bCid.length) + (2 + bUser.length) + (2 + bPass.length);
+            const pkt = new Uint8Array(2 + remLen);
+            
+            let i = 0;
+            pkt[i++] = 0x10; 
+            pkt[i++] = remLen;
+            pkt[i++] = 0x00; pkt[i++] = 0x04; 
+            pkt[i++] = 0x4D; pkt[i++] = 0x51; pkt[i++] = 0x54; pkt[i++] = 0x54; // "MQTT"
+            pkt[i++] = 0x04; 
+            pkt[i++] = 0xC2; 
+            pkt[i++] = 0x00; pkt[i++] = 0x3C; 
+
+            pkt[i++] = bCid.length >> 8; pkt[i++] = bCid.length & 255;
+            pkt.set(bCid, i); i += bCid.length;
+
+            pkt[i++] = bUser.length >> 8; pkt[i++] = bUser.length & 255;
+            pkt.set(bUser, i); i += bUser.length;
+
+            pkt[i++] = bPass.length >> 8; pkt[i++] = bPass.length & 255;
+            pkt.set(bPass, i); i += bPass.length;
+
+            if (ws.readyState === 1) ws.send(pkt);
         }
 
-        function onConnectFailure(error) {
-            statusBar.classList.remove('connected');
-            statusDot.classList.remove('connected');
-            statusText.innerText = "Status: Connection Handshake Failed.";
-            appendLine("CRITICAL ERROR: Handshake rejected by host.", "sys-err");
-            setTimeout(initMQTT, 5000);
+        function sendMqttSubscribePacket() {
+            const encoder = new TextEncoder();
+            const bTopic = encoder.encode(TOPIC_SUBSCRIBE);
+            const remLen = 2 + 2 + bTopic.length + 1;
+            const pkt = new Uint8Array(2 + remLen);
+
+            let i = 0;
+            pkt[i++] = 0x82; 
+            pkt[i++] = remLen;
+            pkt[i++] = 0x00; pkt[i++] = 0x01; 
+            pkt[i++] = bTopic.length >> 8; pkt[i++] = bTopic.length & 255;
+            pkt.set(bTopic, i); i += bTopic.length;
+            pkt[i++] = 0x00; 
+
+            if (ws.readyState === 1) ws.send(pkt);
         }
 
-        function onConnectionLost(responseObject) {
-            statusBar.classList.remove('connected');
-            statusDot.classList.remove('connected');
-            statusText.innerText = "Status: Disconnected. Reconnecting...";
-            setTimeout(initMQTT, 4000);
-        }
-
-        function onMessageArrived(message) {
-            const timeStr = new Date().toLocaleTimeString();
-            const payloadBytes = message.payloadBytes;
-            if (!payloadBytes || payloadBytes.length === 0) return;
-
-            // 1. Generate clean HEX representation columns
-            const hexColumn = Array.from(payloadBytes)
-                .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
-                .join(' ');
-                
-            // 2. Generate clean ASCII visualization rows (converts control characters to safe dots)
-            const asciiColumn = Array.from(payloadBytes)
-                .map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.')
-                .join('');
-
-            // 3. Render perfectly formatted output container
-            const completeRow = `[${timeStr}] \nHEX:   ${hexColumn}\nASCII: ${asciiColumn}\n--------------------------------------------------------------`;
-            appendLine(completeRow, "");
+        function sendMqttPingPacket() {
+            const pkt = new Uint8Array([0xC0, 0x00]);
+            if (ws.readyState === 1) ws.send(pkt);
         }
 
         function appendLine(text, cssClass) {
@@ -151,7 +213,7 @@
             consoleBox.scrollTop = consoleBox.scrollHeight;
         }
 
-        window.onload = initMQTT;
+        window.onload = initNativeMQTT;
     </script>
 </body>
 </html>
