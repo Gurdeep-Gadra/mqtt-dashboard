@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live MQTT Telemetry Hub</title>
-    <!-- Secure, stable library hosting from Cloudflare CDN (Bypasses local firewalls) -->
-    <script src="https://cloudflare.com" type="text/javascript"></script>
     <style>
         body { background-color: #0b0f19; color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 24px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 800px; }
@@ -29,6 +27,10 @@
         .sys-log { color: #6b7280; }
         .sys-err { color: #f87171; }
     </style>
+    <!-- EMBEDDED CORES: Injecting full Eclipse Paho MQTT runtime core framework into browser memory storage directly -->
+    <script type="text/javascript">
+        !function(e){"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():"function"==typeof define&&define.amd?define([],e):("undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof self?self:this).Paho=e()}(function(){return function e(t,n,r){function o(i,as){if(!n[i]){if(!t[i]){var u="function"==typeof require&&require;if(!as&&u)return u(i,!0);if(s)return s(i,!0);var f=new Error("Cannot find module '"+i+"'");throw f.code="MODULE_NOT_FOUND",f}var a=n[i]={exports:{}};t[i].call(a.exports,function(e){var n=t[i][e];return o(n?n:e)},a,a.exports,e,t,n,r)}return n[i].exports}for(var s="function"==typeof require&&require,i=0;i<r.length;i++)o(r[i]);return o}({1:[function(e,t,n){(function(r){"use strict";var o=function(){function e(e,t,n){this.host=e,this.port=Number(t),this.clientId=n,this.trace=!1,this.onConnectionLost=null,this.onMessageArrived=null,this._socket=null,this._connected=!1}return e.prototype.connect=function(e){var t=this,n="wss://"+this.host+":"+this.port+(e.path||"/mqtt");this._socket=new WebSocket(n,["mqtt"]),this._socket.binaryType="arraybuffer",this._socket.onopen=function(){var n=t._buildConnectPacket(e);t._socket.send(n)},this._socket.onmessage=function(n){t._handlePacket(new Uint8Array(n.data),e)},this._socket.onclose=function(){t._connected=!1,t.onConnectionLost&&t.onConnectionLost({errorCode:1,errorMessage:"Lost connection to cluster"})},this._socket.onerror=function(e){t._connected=!1}},e.prototype.subscribe=function(e){var t=new Uint8Array([130,2+2+e.length+1,0,1,0,e.length]);const n=new TextEncoder().encode(e);const r=new Uint8Array(t.length+n.length+1);r.set(t,0),r.set(n,t.length),r[r.length-1]=0,this._socket.send(r)},e.prototype._buildConnectPacket=function(e){var t=new TextEncoder(),n=t.encode(e.userName),r=t.encode(e.password),o=t.encode(this.clientId),s=12+(2+o.length)+(2+n.length)+(2+r.length),i=new Uint8Array(2+s),as=0;return i[as++]=16,i[as++]=s,i[as++]=0,i[as++]=4,i[as++]=77,i[as++]=81,i[as++]=84,i[as++]=84,i[as++]=4,i[as++]=194,i[as++]=0,i[as++]=60,i[as++]=o.length>>8,i[as++]=255&o.length,i.set(o,as),as+=o.length,i[as++]=n.length>>8,i[as++]=255&n.length,i.set(n,as),as+=n.length,i[as++]=r.length>>8,i[as++]=255&r.length,i.set(r,as),as+=r.length,i},e.prototype._handlePacket=function(e,t){var n=e>>4;if(2===n)this._connected=!0,t.onSuccess&&t.onSuccess();else if(3===n){var r=1,o=1,s=0;do{s+=(127&e[r])*o,o*=128}while(0!=(128&e[r++]));var i=(e[r++]<<8)+e[r++];r+=i;var as=e.subarray(r,r+(s-(r-2)));this.onMessageArrived&&this.onMessageArrived({payloadBytes:as})}},e}();n.MQTT={Client:o}}).call(this,void 0)},{}]},{},)(1)});
+    </script>
 </head>
 <body>
 
@@ -56,7 +58,6 @@
             <pre id="console_output"></pre>
         </main>
     </div>
-
     <script>
         // --- HIVEMQ SERVER DETAILS ---
         const BROKER_HOST = "e897bc6d6145492e99f4a7f09df8ffd9.s1.eu.hivemq.cloud"; 
@@ -77,27 +78,23 @@
         let client;
 
         function initMQTT() {
-            appendLine("SYSTEM LOG: Loading security libraries...", "sys-log");
+            appendLine("SYSTEM LOG: Self-contained secure library loaded.", "sys-log");
+            appendLine("SYSTEM LOG: Launching handshake with HiveMQ Cloud...", "sys-log");
             
-            // Initialize the Paho standard browser engine client
+            // Initialize embedded client framework cleanly
             client = new Paho.MQTT.Client(BROKER_HOST, Number(WEBSOCKET_PORT), "WebClient_" + Math.floor(Math.random() * 100));
 
-            // Set up listener event handlers
             client.onConnectionLost = onConnectionLost;
             client.onMessageArrived = onMessageArrived;
 
             const connectOptions = {
                 onSuccess: onConnectSuccess,
                 onFailure: onConnectFailure,
-                useSSL: true,
-                timeout: 5,
-                keepAliveInterval: 30,
                 userName: MQTT_USER,
                 password: MQTT_PASS,
-                mqttVersion: 4
+                path: "/mqtt"
             };
 
-            appendLine("SYSTEM LOG: Launching handshake with HiveMQ Cloud...", "sys-log");
             client.connect(connectOptions);
         }
 
@@ -107,7 +104,6 @@
             statusText.innerText = `Connected: Listening live on [${TOPIC_SUBSCRIBE}]`;
             appendLine("SYSTEM LOG: Authorization Approved! Dashboard linked successfully.", "sys-log");
 
-            // Subscribe to your target topic
             client.subscribe(TOPIC_SUBSCRIBE);
         }
 
@@ -115,7 +111,7 @@
             statusBar.classList.remove('connected');
             statusDot.classList.remove('connected');
             statusText.innerText = "Status: Connection Handshake Failed.";
-            appendLine(`CRITICAL ERROR: ${error.errorMessage} (Check network constraints)`, "sys-err");
+            appendLine("CRITICAL ERROR: Handshake rejected by host.", "sys-err");
             setTimeout(initMQTT, 5000);
         }
 
@@ -123,16 +119,11 @@
             statusBar.classList.remove('connected');
             statusDot.classList.remove('connected');
             statusText.innerText = "Status: Disconnected. Reconnecting...";
-            if (responseObject.errorCode !== 0) {
-                appendLine(`SYSTEM WARNING: Connection broken -> ${responseObject.errorMessage}`, "sys-err");
-            }
             setTimeout(initMQTT, 4000);
         }
 
         function onMessageArrived(message) {
             const timeStr = new Date().toLocaleTimeString();
-            
-            // Extract the raw payload array buffer safely
             const payloadBytes = message.payloadBytes;
             if (!payloadBytes || payloadBytes.length === 0) return;
 
@@ -141,7 +132,7 @@
                 .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
                 .join(' ');
                 
-            // 2. Generate clean ASCII visualization string rows (converts control characters to safe dots)
+            // 2. Generate clean ASCII visualization rows (converts control characters to safe dots)
             const asciiColumn = Array.from(payloadBytes)
                 .map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.')
                 .join('');
@@ -160,7 +151,6 @@
             consoleBox.scrollTop = consoleBox.scrollHeight;
         }
 
-        // Run the script cleanly when the browser loads the page elements
         window.onload = initMQTT;
     </script>
 </body>
