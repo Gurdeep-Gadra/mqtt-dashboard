@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live MQTT Telemetry Hub</title>
+    <!-- Tailwind CSS for sleek UI styling -->
+    <script src="https://tailwindcss.com"></script>
+    <!-- MQTT.js library via official free CDN -->
+    <script src="https://unpkg.com"></script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen font-sans">
+
+    <div class="max-w-4xl mx-auto p-6">
+        <!-- Header Viewport -->
+        <header class="text-center my-8">
+            <h1 class="text-3xl font-black tracking-wider text-emerald-400 uppercase">Live MQTT Telemetry Hub</h1>
+            <p class="text-gray-400 text-sm mt-1">Real-time telemetry parsed directly from HiveMQ Cloud</p>
+        </header>
+
+        <!-- Connection Diagnostics Status Bar -->
+        <div id="status_bar" class="bg-gray-900 border border-amber-500/30 text-amber-400 px-4 py-3 rounded-lg flex items-center justify-between mb-6 transition-all duration-300 shadow-md">
+            <div class="flex items-center space-x-2">
+                <span id="status_dot" class="h-3 w-3 rounded-full bg-amber-500 animate-pulse"></span>
+                <span id="status_text" class="font-semibold text-sm">Status: Disconnected / Initializing Socket Handlers...</span>
+            </div>
+            <span id="live_clock" class="text-xs font-mono text-gray-400">Loading Clock...</span>
+        </div>
+
+        <!-- Terminal Output Window Layout -->
+        <main class="bg-black border border-gray-800 rounded-xl shadow-2xl overflow-hidden">
+            <div class="bg-gray-900 px-4 py-2 border-b border-gray-800 flex items-center space-x-2">
+                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                <span class="text-xs font-mono text-gray-500 pl-2">live_packet_stream.log</span>
+            </div>
+            
+            <pre id="console_output" class="p-4 h-[450px] overflow-y-auto font-mono text-xs text-emerald-400 space-y-1 bg-black/60 leading-relaxed scrollbar-thin scrollbar-thumb-gray-800 selection:bg-emerald-500/30"></pre>
+        </main>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ZONE (REPLACE WITH YOUR HIVEMQ DETAILS) ---
+        const BROKER_HOST = "e897bc6d6145492e99f4a7f09df8ffd9.s1.eu.hivemq.cloud"; // Do NOT include "wss://" or ports here
+        const WEBSOCKET_PORT = 8884;                         // HiveMQ Cloud Secure WebSocket Port
+        const MQTT_USER = "Amber_IOT"; 
+        const MQTT_PASS = "Amber@123";
+        const TOPIC_SUBSCRIBE = "TTW/LAB1";      // Matching your ESP32 subscription path
+
+        // Live ticking header clock helper
+        setInterval(() => {
+            document.getElementById('live_clock').innerText = new Date().toLocaleTimeString();
+        }, 1000);
+
+        const statusText = document.getElementById('status_text');
+        const statusDot = document.getElementById('status_dot');
+        const statusBar = document.getElementById('status_bar');
+        const consoleBox = document.getElementById('console_output');
+
+        // Formulate Secure WebSocket Connection URL string configuration
+        const connectionUrl = `wss://${BROKER_HOST}:${WEBSOCKET_PORT}/mqtt`;
+
+        console.log("Connecting to HiveMQ Broker...");
+        
+        // Initialize MQTT Client options object
+        const client = mqtt.connect(connectionUrl, {
+            username: MQTT_USER,
+            password: MQTT_PASS,
+            clientId: 'WebDashboard_' + Math.random().toString(16).substr(2, 8),
+            clean: true,
+            connectTimeout: 4000,
+            reconnectPeriod: 1000,
+        });
+
+        // --- MQTT CONNECTION LIFE-CYCLE EVENT HANDLERS ---
+        client.on('connect', () => {
+            console.log("Connected Successfully over WebSockets!");
+            statusBar.className = "bg-gray-900 border border-emerald-500/30 text-emerald-400 px-4 py-3 rounded-lg flex items-center justify-between mb-6 shadow-md";
+            statusDot.className = "h-3 w-3 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]";
+            statusText.innerText = `Connected: Listening live on [${TOPIC_SUBSCRIBE}]`;
+            
+            // Subscribe to target string endpoint topic buffer path
+            client.subscribe(TOPIC_SUBSCRIBE, (err) => {
+                if (err) {
+                    appendConsoleLine(`SYSTEM ERROR: Subscribing failed -> ${err.message}`, "text-red-400");
+                } else {
+                    appendConsoleLine(`SYSTEM LOG: Successfully hooked destination endpoint pipeline subscription.`, "text-gray-500");
+                }
+            });
+        });
+
+        client.on('message', (topic, payload) => {
+            const timeStr = new Date().toLocaleTimeString();
+            let stringPayload = payload.toString();
+            
+            // Output layout format styling string parser append routine
+            appendConsoleLine(`[${timeStr}] Rx Packet: ${stringPayload}`, "text-emerald-400");
+        });
+
+        client.on('error', (err) => {
+            console.error("MQTT Client Socket Error Context: ", err);
+            appendConsoleLine(`CLIENT SOCKET EXCEPTION: ${err.message}`, "text-red-400");
+        });
+
+        client.on('close', () => {
+            statusBar.className = "bg-gray-900 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg flex items-center justify-between mb-6 shadow-md";
+            statusDot.className = "h-3 w-3 rounded-full bg-red-500";
+            statusText.innerText = "Status: Connection Closed / Dropped by HiveMQ.";
+        });
+
+        // Safe line append rendering UI subroutines tracking layout visibility bounds
+        function appendConsoleLine(text, cssClass) {
+            const line = document.createElement('div');
+            line.className = cssClass;
+            line.innerText = text;
+            consoleBox.appendChild(line);
+            
+            // Automatically push window frame views downward on overflow traces
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
