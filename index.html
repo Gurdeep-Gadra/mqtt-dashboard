@@ -92,7 +92,7 @@
         let ws;
         let pingTimer;
 
-        // RESTORED 100% UNTOUCHED FROM YOUR MASTER SCRIPT
+        // RESTORED 100% UNTOUCHED FROM YOUR WORKING SCRIPT
         function connectNativeMQTT() {
             const url = `wss://${BROKER_HOST}:${WEBSOCKET_PORT}/mqtt`;
             ws = new WebSocket(url, ["mqtt"]); 
@@ -147,7 +147,7 @@
                         const ta       = 26.5; 
                         const tsu      = rawDataBytes[totalLen - 13] - 25; 
 
-                        // DECODING ADDED: Safely slice and read the 16-bit integer for Compressor Time
+                        // Safe extraction of the 16-bit integer representing Compressor Run Time from the data block
                         const compTime = (rawDataBytes[totalLen - 16] << 8) | rawDataBytes[totalLen - 17];
 
                         // Map values straight onto your dashboard text fields
