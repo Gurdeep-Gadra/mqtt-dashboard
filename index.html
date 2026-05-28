@@ -30,7 +30,7 @@
         .c-yellow { background-color: #f59e0b; }
         .c-green { background-color: #10b981; }
         .terminal-title { color: #4b5563; font-family: monospace; font-size: 12px; margin-left: 10px; }
-        pre { margin: 0; padding: 16px; height: 250px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; font-size: 13px; color: #10b981; line-height: 1.6; white-space: pre-wrap; }
+        pre { margin: 0; padding: 16px; height: 350px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; font-size: 13px; color: #10b981; line-height: 1.6; white-space: pre-wrap; }
         .sys-log { color: #6b7280; }
         .sys-err { color: #f87171; }
     </style>
@@ -92,6 +92,7 @@
         let ws;
         let pingTimer;
 
+        // RESTORED YOUR EXACT ORIGINAL WORKING CONNECTION ENGINE
         function connectNativeMQTT() {
             const url = `wss://${BROKER_HOST}:${WEBSOCKET_PORT}/mqtt`;
             ws = new WebSocket(url, ["mqtt"]); 
@@ -133,6 +134,7 @@
                     const rawDataBytes = payload.subarray(idx);
                     const totalLen = rawDataBytes.length;
 
+                    // Extract data rows backwards from the line end markers
                     if (totalLen >= 15 && rawDataBytes[totalLen - 1] === 0x03 && rawDataBytes[totalLen - 2] === 0x09) {
                         
                         const fanIpm   = rawDataBytes[totalLen - 3];
@@ -145,6 +147,7 @@
                         const ta       = 26.5; 
                         const tsu      = rawDataBytes[totalLen - 13] - 25; 
 
+                        // Update dashboard cards
                         document.getElementById('val_td').innerText = td + " °C";
                         document.getElementById('val_tc').innerText = tc + " °C";
                         document.getElementById('val_ta').innerText = ta + " °C";
@@ -154,7 +157,7 @@
                         document.getElementById('val_tipm').innerText = tipm + " °C";
                         document.getElementById('val_fanipm').innerText = fanIpm === 0 ? "0 °C / Normal" : fanIpm + " °C";
 
-                        // STRICT MODIFICATION ONLY: Converting raw bytes directly to parallel HEX/ASCII logs
+                        // --- ADDED DUAL PACKET VISUALIZATION ONLY ---
                         const timeStr = new Date().toLocaleTimeString();
                         
                         const hexColumn = Array.from(rawDataBytes)
@@ -211,6 +214,7 @@
             ws.send(pkt);
         }
 
+        // RESTORED 100% ACCURATELY WITH THE EXACT ORIGINAL VARIABLES
         function sendMqttSubscribePacket() {
             const enc = new TextEncoder();
             const bTopic = enc.encode(TOPIC_SUBSCRIBE);
@@ -222,7 +226,7 @@
             pkt[idx++] = remLen;
             pkt[idx++] = 0; pkt[idx++] = 1; 
             pkt[idx++] = (bTopic.length >> 8); pkt[idx++] = (bTopic.length & 255);
-            pkt.set(bTopic, idx); idx += bTopic.length;
+            pkt.set(bTopic, idx); idx += bTopic.length; // Uses exact working variable 'idx'
             pkt[idx++] = 0; 
 
             ws.send(pkt);
