@@ -149,7 +149,7 @@
                         const ta       = 26.5; 
                         const tsu      = rawDataBytes[totalLen - 13] - 25; 
 
-                        const CompTime =rawDataBytes[totalLen - 10]-7;
+                        const CompTime = (rawDataBytes[totalLen - 86] << 8) | rawDataBytes[totalLen - 85];
 
                         // Update dashboard metrics cards
                         document.getElementById('val_td').innerText = td + " °C";
@@ -188,7 +188,6 @@
             };
         }
 
-        // RESTORED 100% TO YOUR ORIGINAL WORKING FUNCTION
         function sendMqttConnectPacket() {
             const cid = "WebHub" + Math.floor(Math.random() * 1000);
             const enc = new TextEncoder();
@@ -220,7 +219,6 @@
             ws.send(pkt);
         }
 
-        // RESTORED 100% TO YOUR ORIGINAL WORKING FUNCTION
         function sendMqttSubscribePacket() {
             const enc = new TextEncoder();
             const bTopic = enc.encode(TOPIC_SUBSCRIBE);
@@ -233,7 +231,6 @@
             pkt[idx++] = 0; pkt[idx++] = 1; 
             pkt[idx++] = (bTopic.length >> 8); pkt[idx++] = (bTopic.length & 255);
             
-            // Your exact original variable iteration logic preserved
             for (var i = 0; i < bTopic.length; i++) {
                 pkt[idx++] = bTopic[i];
             }
