@@ -149,7 +149,7 @@
                         const ta       = 26.5; 
                         const tsu      = rawDataBytes[totalLen - 13] - 25; 
 
-                        const CompTime = totalLen;//(rawDataBytes[totalLen - 86] << 8) | rawDataBytes[totalLen - 85];
+                        const CompTime = (rawDataBytes[6] << 8) | rawDataBytes[5];
 
                         // Update dashboard metrics cards
                         document.getElementById('val_td').innerText = td + " °C";
