@@ -30,7 +30,7 @@
         .c-yellow { background-color: #f59e0b; }
         .c-green { background-color: #10b981; }
         .terminal-title { color: #4b5563; font-family: monospace; font-size: 12px; margin-left: 10px; }
-        pre { margin: 0; padding: 16px; height: 350px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; font-size: 13px; color: #10b981; line-height: 1.6; white-space: pre-wrap; }
+        pre { margin: 0; padding: 16px; height: 250px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; font-size: 13px; color: #10b981; line-height: 1.6; white-space: pre-wrap; }
         .sys-log { color: #6b7280; }
         .sys-err { color: #f87171; }
     </style>
@@ -81,7 +81,6 @@
         const MQTT_PASS = "Amber@123";       
         const TOPIC_SUBSCRIBE = "TTW/LAB1"; 
 
-        // Live Header Clock
         setInterval(() => {
             document.getElementById('live_clock').innerText = new Date().toLocaleTimeString();
         }, 1000);
@@ -93,7 +92,7 @@
         let ws;
         let pingTimer;
 
-        // RESTORED 100% TO YOUR ORIGINAL WORKING FUNCTION
+        // ORIGINAL WORKING CONNECTION WRAPPER
         function connectNativeMQTT() {
             const url = `wss://${BROKER_HOST}:${WEBSOCKET_PORT}/mqtt`;
             ws = new WebSocket(url, ["mqtt"]); 
@@ -148,7 +147,7 @@
                         const ta       = 26.5; 
                         const tsu      = rawDataBytes[totalLen - 13] - 25; 
 
-                        // Update dashboard metrics cards
+                        // Update top data box metrics cards
                         document.getElementById('val_td').innerText = td + " °C";
                         document.getElementById('val_tc').innerText = tc + " °C";
                         document.getElementById('val_ta').innerText = ta + " °C";
@@ -158,7 +157,7 @@
                         document.getElementById('val_tipm').innerText = tipm + " °C";
                         document.getElementById('val_fanipm').innerText = fanIpm === 0 ? "0 °C / Normal" : fanIpm + " °C";
 
-                        // --- RAW FEED TERMINAL LOG PIPELINE ---
+                        // --- RAW PARALLEL HEX/ASCII OUTPUT DISPLAY BOX ---
                         const timeStr = new Date().toLocaleTimeString();
                         
                         const hexColumn = Array.from(rawDataBytes)
@@ -184,7 +183,7 @@
             };
         }
 
-        // RESTORED 100% TO YOUR ORIGINAL WORKING FUNCTION
+        // ORIGINAL WORKING PACKET STRUCTURE UNTOUCHED
         function sendMqttConnectPacket() {
             const cid = "WebHub" + Math.floor(Math.random() * 1000);
             const enc = new TextEncoder();
@@ -216,7 +215,7 @@
             ws.send(pkt);
         }
 
-        // RESTORED 100% TO YOUR ORIGINAL WORKING FUNCTION
+        // ORIGINAL WORKING PACKET STRUCTURE UNTOUCHED
         function sendMqttSubscribePacket() {
             const enc = new TextEncoder();
             const bTopic = enc.encode(TOPIC_SUBSCRIBE);
@@ -229,7 +228,6 @@
             pkt[idx++] = 0; pkt[idx++] = 1; 
             pkt[idx++] = (bTopic.length >> 8); pkt[idx++] = (bTopic.length & 255);
             
-            // Your exact original variable iteration logic preserved
             for (var i = 0; i < bTopic.length; i++) {
                 pkt[idx++] = bTopic[i];
             }
@@ -251,3 +249,4 @@
     </script>
 </body>
 </html>
+
