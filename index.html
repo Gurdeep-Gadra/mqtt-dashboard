@@ -134,6 +134,7 @@
                     const rawDataBytes = payload.subarray(idx);
                     const totalLen = rawDataBytes.length;
 
+                    // Extract data rows backwards from the line end markers
                     if (totalLen >= 15 && rawDataBytes[totalLen - 1] === 0x03 && rawDataBytes[totalLen - 2] === 0x09) {
                         
                         const fanIpm   = rawDataBytes[totalLen - 3];
@@ -146,10 +147,10 @@
                         const ta       = 26.5; 
                         const tsu      = rawDataBytes[totalLen - 13] - 25; 
 
-                        // STRIKT REAL-TIME READ: Read bytes 6 & 7 dynamically from every incoming packet
-                        const activeCompTime = (rawDataBytes[6] << 8) | rawDataBytes[5];
+                        // CORRECTED FRONT INDEX ENGINE MAPPING: Reads strictly from indices 6 and 7 of the raw payload
+                        const CompTime = (rawDataBytes[6] << 8) | rawDataBytes[7];
 
-                        // Update dashboard cards dynamically on message arrival
+                        // Update dashboard metrics cards
                         document.getElementById('val_td').innerText = td + " °C";
                         document.getElementById('val_tc').innerText = tc + " °C";
                         document.getElementById('val_ta').innerText = ta + " °C";
@@ -158,11 +159,9 @@
                         document.getElementById('val_eev').innerText = eev + " P";
                         document.getElementById('val_tipm').innerText = tipm + " °C";
                         document.getElementById('val_fanipm').innerText = fanIpm === 0 ? "0 °C / Normal" : fanIpm + " °C";
-                        
-                        // Push real-time data frame values directly to visual layout metrics target ID
-                        document.getElementById('Comp_Time').innerText = activeCompTime + " Sec";
+                        document.getElementById('Comp_Time').innerText = CompTime + " Sec";
 
-                        // Raw dual formatting feed generation layout
+                        // --- RAW FEED TERMINAL LOG PIPELINE ---
                         const timeStr = new Date().toLocaleTimeString();
                         
                         const hexColumn = Array.from(rawDataBytes)
@@ -173,7 +172,7 @@
                             .map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.')
                             .join('');
 
-                        const completeRow = `[${timeStr}] \nComp: ${activeCompTime}\nHEX:   ${hexColumn}\nASCII: ${asciiColumn}\n--------------------------------------------------------------`;
+                        const completeRow = `[${timeStr}] \nComp: ${CompTime}\nHEX:   ${hexColumn}\nASCII: ${asciiColumn}\n--------------------------------------------------------------`;
                         appendLine(completeRow, "");
                     }
                 }
