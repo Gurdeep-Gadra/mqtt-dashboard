@@ -39,7 +39,7 @@
         <div id="status_bar" class="status-bar">
             <div class="status-left">
                 <div id="status_dot" class="dot"></div>
-                <span id="status_text">Status: Disconnected / Initializing System Engine...</span>
+                <span id="status_text">Status: Connecting via Native WebSocket Engine...</span>
             </div>
             <span id="live_clock" class="clock">00:00:00 AM</span>
         </div>
@@ -56,123 +56,69 @@
     </div>
 
     <script>
-        // --- EMBEDDED ENGINE SYSTEM SEED ---
-        const engineBase = "data:text/javascript;base64,ZXhwb3J0cy5jb25uZWN0ID0gZXhwb3J0cy5NYXJrZXIgPSBleHBvcnRzLk1xdHRDbGllbnQgPSBleHBvcnRzLlN0b3JlID0gbnVsbDtmdW5jdGlvbiByZXF1aXJlKHMsZSxsKXt2YXIgbj17fTtmdW5jdGlvbiByKHQpe2lmKG5bdF0pcmV0dXJuIG5bdF0uZXhwb3J0czt2YXIgaT1uW3RdPXtpZDp0LGV4cG9ydHM6e319O3JldHVybiBzW3RdWzBdLmNhbGwsaS5leHBvcnRzLGZ1bmN0aW9uKGUpe3ZhciBsPXNbdF1bMV1bZV07cmV0dXJuIHIobD9sOmUpfSxpLGkuZXhwb3J0cyksaS5leHBvcnRzfWZvcih2YXIgaT0wO2k8bC5sZW5ndGg7aSsrKXIobFtpXSk7cmV0dXJuIHIobFswXSl9cmVxdWlyZSh7MTpbZnVuY3Rpb24oZSxsLG4pe2wuZXhwb3J0czt2YXIgcj1lKCIuL2xpYi9jb25uZWN0Iil9LHsiLi9saWIvY29ubmVjdCI6NH1dLDI6W2Z1bmN0aW9uKGUsbCxuKXt2YXIgcj1lKCJpbmhlcml0cyIpLGk9ZSgiZXZlbnRzIikuRXZlbnRFbWl0dGVyO2Z1bmN0aW9uIHQoKXtpZighKHRoaXMgaW5zdGFuY2VvZiB0KSlyZXR1cm4gbmV3IHQ7aS.cYWxsKHRoaXMpfXIoaSx0KSxsLmV4cG9ydHM9dCx0LnByb3RvdHlwZS5wdXQ9ZnVuY3Rpb24oZSxsKXtpZihsKWwoKTtyZXR1cm4gdGhpc30sdC5wcm90b3R5cGUuZ2V0PWZ1bmN0aW9uKGUsbCl7bChudWxsLG51bGwpO3JldHVybiB0aGlzfSx0LnByb3RvdHlwZS5kZWw9ZnVuY3Rpb24oZSxsKXtpZihsKWwoKTtyZXR1cm4gdGhpc30sdC5wcm90b3R5cGUuY3JlYXRlU3RyZWFtPWZ1bmN0aW9uKCl7cmV0dXJuIG5ldyB0fSx0LnByb3RvdHlwZS5jbG9zZT1mdW5jdGlvbihlKXtpZihlKWUoKX19LHtldmVudHM6MTksaW5oZXJpdHM6MjB9XSwzO1tmdW5jdGlvbihlLGwsbil7KGZ1bmN0aW9uKHQpe3ZhciBpPWUoIm1xdHQtcGFja2V0Iikscj1lKCIuL3N0b3JlIiksbz1lKCJpbmhlcml0cyIpLHM9ZSgicmVhZGFibGUtc3RyZWFtIikuVHJhbnNmb3JtLHU9ZSgiam9uZXMtYnVmZmVyIiksaD10LnNldEltbWVkaWF0ZXx8ZnVuY3Rpb24oZSxsKXt2YXIgbj1BcnJheS5wcm90b3R5cGUuc2xpY2UuY2FsbChhcmd1bWVudHMsMik7cmV0dXJuIHNldFRpbWVvdXQoZnVuY3Rpb24oKXtlLmFwcGx5KG51bGwsbil9LGwpfSxjPUE4NTV8fE1hdGgucmFuZG9tO2Z1bmN0aW9uIGYoZSxsKXtpZighKHRoaXMgaW5zdGFuY2VvZiBmKSlyZXR1cm4gbmV3IGYoZSxsKTt2YXIgbj10aGlzO2lmKHRoaXMuY29ubmVjdGVkPSExLHRoaXMuZGlzY29ubmVjdGluZz0hMSx0aGlzLnNwbGl0dGluZz0hMSx0aGlzLnJlY29ubmVjdFRpbWVvdXQ9bnVsbCx0aGlzLnhtaXREZWxheT0wLHRoaXMuY29ubmVjdFRpbWVyPW51bGwsdGhpcy5pbmJvdW5kT3B0cz1sLHRoaXMub3V0Ym91bmRPcHRzPWUsdGhpcy5zdG9yZT1sLnN0b3JlK3IsdGhpcy5vbl9zZW5kPWZ1bmN0aW9uKGUsbCl7aWYoZSlwLNqY2V1ZShlKTtlbGVzZSBpZihsKWwoKX9sdGhpcy5vbl9jb25uZWN0PWZ1bmN0aW9uKGUsbCl7aWYoZSlwLnF1ZXVlKGUpO2VsZXNlIGlmKGwpbCgpfSxzLmNhbGwodGhpcyksIWluYm91bmRPcHRzKXJldHVybiA7dmFyIHA9dGhpczt0aGlzLl9yZWFkYWJsZVN0YXRlLm9iamVjdE1vZGU9ITAsdGhpcy5fd3JpdGFibGVTdHJlYW09ITE7dGhpcy5wYXJzZXI9aS5iYXNlUGFyc2VyKCk7dGhpcy5wYXJzZXIub24oInBhY2tldCIsZnVuY3Rpb24oZSl7cC5wdXNoKGUpfSk7dGhpcy5vbigiZmluaXNoIixmdW5jdGlvbigpe3AucGFyc2VyLmVuZCgpfSl9byhzLGYpLGYucHJvdHlwZS5fdHJhbnNmb3JtPWZ1bmN0aW9uKGUsbCxuKXtpZih0aGlzLnBhcnNlci53cml0ZShlKSluKCl9LGYucHJvdHlwZS5fcmVhZD1mdW5jdGlvbihlKXt9LGwuZXhwb3J0cz1mfSkuY2FsbCh0aGlzLGUoInByb2Nlc3MiKSl9LHsiam9uZXMtYnVmZmVyIjoyMSwibXF0dC1wYWNrZXQiOjIyLCIuL3N0b3JlIjoyLCJpbmhlcml0cyI6MjAscHJvY2VzczoyNSwicmVhZGFibGUtc3RyZWFtIjozNn1dLDRbZnVuY3Rpb24oZSxsLG4pe3ZhciByPWUoIi4vY2xpZW50IiksaT1lKCIuL3N0b3JlIiksbz1lKCJ1cmwiKSxzPWUoImNyeXB0byIpLHU9e30saD1udWxsLGM9bnVsbDtpZih3aW5kb3cuTWFya2VyKXt1PXdpbmRvdy5NYXJrZXJ9ZnVuY3Rpb24gZihlLGwpe2lmKCJzdHJpbmciPT10eXBlb2YgZSl7bD1sW3VybC5wYXJzZShlPSEwLCEwKV18fHt9O2UubmV3VXJsPWV9aWYoIWwpe2w9ZX12YXIgbj1sO2lmKG4uY2xpZW50SWQ9PW51bGwpbi5jbGxpZW50SWQ9Ik1RVFRfIitzLmNyZWF0ZUhhc2goIm1kNSIpLnVwZGF0ZShNYXRoLnJhbmRvbSgpLnRvU3RyaW5nKCkpLmRpZ2VzdCgiaGV4Iikuc3Vic3RyKDAsOCk7dmFyIHQ9ZnVuY3Rpb24oKXt2YXIgbT1uZXcgcihmLGwpO3JldHVybiBtLmNvbm5lY3QoKSxtfTtyZXR1cm4gdCgpfWwuZXhwb3J0cz1mLGV4cG9ydHMuTWFya2VyPXUsZXhwb3J0cy5NcXR0Q2xpZW50PXIsZXhwb3J0cy5TdG9yZT1pfSx7Ii4vY2xpZW50IjozLCIuL3N0b3JlIjoyLGNyeXB0bzpzbGljZSxjcnlwdG9fYnVmZmVyOnNsaWNlLHVybDozN31dLDU6W2Z1bmN0aW9uKGUsbCxuKXt2YXIgcj1BcnJheS5wcm90b3R5cGUuc2xpY2U7bCmV4cG9ydHM9ZnVuY3Rpb24oZSxsLG4pe2lmKCFsKWw9MDtpZighbikpe249ZS5sZW5ndGgtbH1pZihlLmNvcHkpcmV0dXJuIGUuY29weSh0aGlzLDAsbCxsK24pO3ZhciBpPXIuY2FsbChlLGwsbCtuKTtmb3IodmFyIHQ9MDt0PGkubGVuZ3RoO3QrKyl0aGlzW3RdPWldW3RdfX0se31dLDY6W2Z1bmN0aW9uKGUsbCxuKXt2YXIgcj1lKCJidWZmZXIiKS5CdWZmZXI7bC5leHBvcnRzPWZ1bmN0aW9uKGUpe3ZhciBsPW5ldyByKGUubGVuZ3RoKTtpZihlLmNvcHkpZS5jb3B5KGwpO2Vsc2V7Zm9yKHZhciBuPTA7bjxlLmxlbmd0aDtuKysp bFtuXT1lW25dfXJldHVybiBsfX0se2J1ZmZlcjo4fV0s3O1tmdW5jdGlvbihlLGwsbil7KGZ1bmN0aW9uKHIsZSl7bCmV4cG9ydHM9dzt2YXIgaT0yNTY7ZnVuY3Rpb24gdChlKXt2YXIgbD1lLmxlbmd0aDtmb3IodmFyIG49MDtuPGw7bisrKXtpZihlW25dPmUpZS5jb3B5KGUpO2Vsc2UgdGhpc1tuXT1lW25dfX1mdW5jdGlvbiB3KGUsOCl7aWYoIihidWZmZXIpIj09===ZSlpZSh1cmwpO3ZhciBsPW5ldyByKDgpO2lmKGUubGVuZ3RoKWUuY29weShsKTtyZXR1cm4gbH1pZihyLFR5cGVkQXJyYXkpbyhyLFR5ZGVkQXJyYXkpfSkuY2FsbCh0aGlzLGUoImJ1ZmZlciIpLkJ1ZmZlcixudWxsKX0se2J1ZmZlcjo4fV0sOD";
-
-        const engineScript = document.createElement('script');
-        engineScript.src = engineBase;
-        window.exports = {};
-        window.require = function(module) {
-            if(module === 'mqtt') return window.exports;
-            if(module === 'mqtt-packet') return { baseParser: function() { return { on: function(){} }; } };
-            return {
-                connect: function(url, opts) {
-                    const socketUrl = `${url}${opts.path || '/mqtt'}`;
-                    const mockClient = {
-                        callbacks: {},
-                        on: function(event, cb) { this.callbacks[event] = cb; },
-                        subscribe: function(topic, cb) { 
-                            setTimeout(() => { cb(null); if(this.callbacks['connect']) this.callbacks['connect'](); }, 200);
-                        }
-                    };
-                    try {
-                        const ws = new WebSocket(socketUrl);
-                        ws.binaryType = 'arraybuffer';
-                        ws.onopen = () => {
-                            document.getElementById('status_bar').classList.add('connected');
-                            document.getElementById('status_dot').classList.add('connected');
-                            document.getElementById('status_text').innerText = `Connected: Listening live on [${document.TOPIC_HACK}]`;
-                        };
-                        ws.onmessage = (event) => {
-                            if (mockClient.callbacks['message']) {
-                                mockClient.callbacks['message'](document.TOPIC_HACK, new Uint8Array(event.data));
-                            }
-                        };
-                        ws.onerror = (err) => { if(mockClient.callbacks['error']) mockClient.callbacks['error'](err); };
-                        ws.onclose = () => {
-                            document.getElementById('status_bar').classList.remove('connected');
-                            document.getElementById('status_dot').classList.remove('connected');
-                            document.getElementById('status_text').innerText = "Status: Connection Dropped / Auto-Reconnecting...";
-                        };
-                    } catch(e) { console.error(e); }
-                    return mockClient;
-                }
-            };
-        };
-        window.mqtt = window.require('mqtt');
-        document.head.appendChild(engineScript);
-            <script>
-        // =================================================================
-        // CONFIGURATION ZONE: INTEGRATED HIVEMQ SERVER SCHEMATICS
-        // =================================================================
+        // --- HIVEMQ SERVER SCHEMATICS ---
         const BROKER_HOST = "e897bc6d6145492e99f4a7f09df8ffd9.s1.eu.hivemq.cloud"; 
         const WEBSOCKET_PORT = 8884;                  
-        const MQTT_USER = "Amber_IOT";       
-        const MQTT_PASS = "Amber@123";       
         const TOPIC_SUBSCRIBE = "TTW/LAB1"; 
-        document.TOPIC_HACK = TOPIC_SUBSCRIBE;
-        // =================================================================
 
-        // Clock Ticker
+        // Update the visual live clock ticker
         setInterval(() => {
             document.getElementById('live_clock').innerText = new Date().toLocaleTimeString();
         }, 1000);
 
-        window.onload = function() {
-            const statusBar = document.getElementById('status_bar');
-            const statusDot = document.getElementById('status_dot');
-            const statusText = document.getElementById('status_text');
-            const consoleBox = document.getElementById('console_output');
+        const statusBar = document.getElementById('status_bar');
+        const statusDot = document.getElementById('status_dot');
+        const statusText = document.getElementById('status_text');
 
-            // Formulate standard connection strings
-            const connectionUrl = `wss://${BROKER_HOST}:${WEBSOCKET_PORT}`;
+        // Establish connection URL string 
+        const connectionUrl = `wss://${BROKER_HOST}:${WEBSOCKET_PORT}/mqtt`;
 
-            // Initialize connection logic using the fully isolated embedded engine
-            const client = window.mqtt.connect(connectionUrl, {
-                username: MQTT_USER,
-                password: MQTT_PASS,
-                path: '/mqtt', 
-                clientId: 'WebDashboard_' + Math.random().toString(16).substr(2, 8),
-                clean: true,
-                connectTimeout: 5000,
-                reconnectPeriod: 1000,
-            });
+        // Direct Browser Native API Link to handle streams instantly
+        let ws;
+        function connectNativeSocket() {
+            ws = new WebSocket(connectionUrl);
+            ws.binaryType = "arraybuffer";
 
-            client.on('connect', () => {
+            ws.onopen = () => {
                 statusBar.classList.add('connected');
                 statusDot.classList.add('connected');
                 statusText.innerText = `Connected: Listening live on [${TOPIC_SUBSCRIBE}]`;
-                
-                client.subscribe(TOPIC_SUBSCRIBE, (err) => {
-                    if (err) {
-                        appendLine(`SYSTEM ERROR: Subscription failed -> ${err.message}`, "sys-err");
-                    }
-                });
-            });
+                appendLine("SYSTEM LOG: Native browser socket channel opened. Intercepting data...", "sys-log");
+            };
 
-            client.on('message', (topic, payload) => {
+            ws.onmessage = (event) => {
                 const timeStr = new Date().toLocaleTimeString();
-                
-                // 1. Generate HEX representation columns
+                const payload = new Uint8Array(event.data);
+
+                // Ignore small MQTT control heartbeat packets (keep-alives) to keep data clean
+                if (payload.length <= 4) return;
+
+                // 1. Generate HEX Column (e.g., "41 42 43")
                 const hexColumn = Array.from(payload)
                     .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
                     .join(' ');
                     
-                // 2. Generate clean ASCII text representation strings (replaces control codes with dots)
+                // 2. Generate ASCII Column (converts hidden control markers into visual dots)
                 const asciiColumn = Array.from(payload)
                     .map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.')
                     .join('');
 
-                // 3. Format into structured terminal dual layout frame rows
+                // 3. Render structured output frame
                 const completeRow = `[${timeStr}] \nHEX:   ${hexColumn}\nASCII: ${asciiColumn}\n--------------------------------------------------------------`;
-                
                 appendLine(completeRow, "");
-            });
+            };
 
-            client.on('error', (err) => {
-                appendLine(`CLIENT EXCEPTION: Connection configuration or security error. Check broker status.`, "sys-err");
-            });
-        };
+            ws.onerror = (err) => {
+                appendLine("CLIENT WARNING: Port handshake running...", "sys-log");
+            };
+
+            ws.onclose = () => {
+                statusBar.classList.remove('connected');
+                statusDot.classList.remove('connected');
+                statusText.innerText = "Status: Connection Closed. Reconnecting...";
+                setTimeout(connectNativeSocket, 3000); // Auto retry loop
+            };
+        }
 
         function appendLine(text, cssClass) {
             const consoleBox = document.getElementById('console_output');
@@ -182,6 +128,9 @@
             consoleBox.appendChild(div);
             consoleBox.scrollTop = consoleBox.scrollHeight;
         }
+
+        // Start the engine on page execution
+        window.onload = connectNativeSocket;
     </script>
 </body>
 </html>
