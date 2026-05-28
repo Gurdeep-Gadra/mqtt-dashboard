@@ -82,7 +82,6 @@
         const MQTT_PASS = "Amber@123";       
         const TOPIC_SUBSCRIBE = "TTW/LAB1"; 
 
-        // Live Header Clock
         setInterval(() => {
             document.getElementById('live_clock').innerText = new Date().toLocaleTimeString();
         }, 1000);
@@ -94,7 +93,6 @@
         let ws;
         let pingTimer;
 
-        // RESTORED 100% TO YOUR ORIGINAL WORKING FUNCTION
         function connectNativeMQTT() {
             const url = `wss://${BROKER_HOST}:${WEBSOCKET_PORT}/mqtt`;
             ws = new WebSocket(url, ["mqtt"]); 
@@ -136,7 +134,6 @@
                     const rawDataBytes = payload.subarray(idx);
                     const totalLen = rawDataBytes.length;
 
-                    // Extract data rows backwards from the line end markers
                     if (totalLen >= 15 && rawDataBytes[totalLen - 1] === 0x03 && rawDataBytes[totalLen - 2] === 0x09) {
                         
                         const fanIpm   = rawDataBytes[totalLen - 3];
@@ -149,9 +146,10 @@
                         const ta       = 26.5; 
                         const tsu      = rawDataBytes[totalLen - 13] - 25; 
 
-                        //const CompTime = (rawDataBytes[6] << 8) | rawDataBytes[5];
+                        // STRIKT REAL-TIME READ: Read bytes 6 & 7 dynamically from every incoming packet
+                        const activeCompTime = (rawDataBytes[6] << 8) | rawDataBytes[5];
 
-                        // Update dashboard metrics cards
+                        // Update dashboard cards dynamically on message arrival
                         document.getElementById('val_td').innerText = td + " °C";
                         document.getElementById('val_tc').innerText = tc + " °C";
                         document.getElementById('val_ta').innerText = ta + " °C";
@@ -160,12 +158,12 @@
                         document.getElementById('val_eev').innerText = eev + " P";
                         document.getElementById('val_tipm').innerText = tipm + " °C";
                         document.getElementById('val_fanipm').innerText = fanIpm === 0 ? "0 °C / Normal" : fanIpm + " °C";
-                        //document.getElementById('Comp_Time').innerText = CompTime + " Sec";
+                        
+                        // Push real-time data frame values directly to visual layout metrics target ID
+                        document.getElementById('Comp_Time').innerText = activeCompTime + " Sec";
 
-                        // --- RAW FEED TERMINAL LOG PIPELINE ---
+                        // Raw dual formatting feed generation layout
                         const timeStr = new Date().toLocaleTimeString();
-
-                        const CompTime = (rawDataBytes[6] << 8) | rawDataBytes[5]; 
                         
                         const hexColumn = Array.from(rawDataBytes)
                             .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
@@ -174,8 +172,8 @@
                         const asciiColumn = Array.from(rawDataBytes)
                             .map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.')
                             .join('');
-                           
-                        const completeRow = `[${timeStr}] \nComp:   ${CompTime}\nHEX:   ${hexColumn}\nASCII: ${asciiColumn}\n--------------------------------------------------------------`;
+
+                        const completeRow = `[${timeStr}] \nComp: ${activeCompTime}\nHEX:   ${hexColumn}\nASCII: ${asciiColumn}\n--------------------------------------------------------------`;
                         appendLine(completeRow, "");
                     }
                 }
