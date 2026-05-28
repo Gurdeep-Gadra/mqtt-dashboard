@@ -92,6 +92,7 @@
         let ws;
         let pingTimer;
 
+        // RESTORED INDEPENDENT CONNECTION WRAPPER INFRASTRUCTURE
         function connectNativeMQTT() {
             const url = `wss://${BROKER_HOST}:${WEBSOCKET_PORT}/mqtt`;
             ws = new WebSocket(url, ["mqtt"]); 
@@ -107,6 +108,7 @@
 
                 const packetType = payload >> 4;
 
+                // FIXED FIXED: Restored to your exact original working condition statement bounds
                 if (packetType === 2) {
                     statusBar.classList.add('connected');
                     statusDot.classList.add('connected');
@@ -133,6 +135,7 @@
                     const rawDataBytes = payload.subarray(idx);
                     const totalLen = rawDataBytes.length;
 
+                    // Parse packets matching structural termination footers
                     if (totalLen >= 15 && rawDataBytes[totalLen - 1] === 0x03 && rawDataBytes[totalLen - 2] === 0x09) {
                         
                         const fanIpm   = rawDataBytes[totalLen - 3];
@@ -145,6 +148,7 @@
                         const ta       = 26.5; 
                         const tsu      = rawDataBytes[totalLen - 13] - 25; 
 
+                        // Populate visual card elements
                         document.getElementById('val_td').innerText = td + " °C";
                         document.getElementById('val_tc').innerText = tc + " °C";
                         document.getElementById('val_ta').innerText = ta + " °C";
@@ -154,6 +158,7 @@
                         document.getElementById('val_tipm').innerText = tipm + " °C";
                         document.getElementById('val_fanipm').innerText = fanIpm === 0 ? "0 °C / Normal" : fanIpm + " °C";
 
+                        // --- RAW FEED CONCURRENT TERMINAL LOG TIMELINE ---
                         const timeStr = new Date().toLocaleTimeString();
                         
                         const hexColumn = Array.from(rawDataBytes)
