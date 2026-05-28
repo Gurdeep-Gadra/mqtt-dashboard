@@ -81,6 +81,7 @@
         const MQTT_PASS = "Amber@123";       
         const TOPIC_SUBSCRIBE = "TTW/LAB1"; 
 
+        // Live Header Clock
         setInterval(() => {
             document.getElementById('live_clock').innerText = new Date().toLocaleTimeString();
         }, 1000);
@@ -98,7 +99,7 @@
             ws.binaryType = "arraybuffer";
 
             ws.onopen = () => {
-                sendMqttConnectPacket();
+                setTimeout(sendMqttConnectPacket, 150);
             };
 
             ws.onmessage = (event) => {
@@ -107,17 +108,19 @@
 
                 const packetType = payload >> 4;
 
+                // CONNACK packet handler matching your exact baseline structure
                 if (packetType === 2) {
                     statusBar.classList.add('connected');
                     statusDot.classList.add('connected');
                     statusText.innerText = `Connected: Listening live on [${TOPIC_SUBSCRIBE}]`;
-                    appendLine("SYSTEM LOG: Authorization approved! Pipeline active.", "sys-log");
+                    appendLine("SYSTEM LOG: Authorization approved! Pipeline completely open.", "sys-log");
                     sendMqttSubscribePacket();
                     
                     clearInterval(pingTimer);
-                    pingTimer = setInterval(() => { if(ws.readyState === 1) ws.send(new Uint8Array([0xC0, 0x00])); }, 15000);
+                    pingTimer = setInterval(sendMqttPingPacket, 20000);
                 }
                 
+                // PUBLISH packet decoder tracking your exact original offset math
                 if (packetType === 3) {
                     let idx = 1;
                     let remLen = 0;
@@ -145,6 +148,7 @@
                         const ta       = 26.5; 
                         const tsu      = rawDataBytes[totalLen - 13] - 25; 
 
+                        // Update dashboard metrics cards
                         document.getElementById('val_td').innerText = td + " °C";
                         document.getElementById('val_tc').innerText = tc + " °C";
                         document.getElementById('val_ta').innerText = ta + " °C";
@@ -154,8 +158,19 @@
                         document.getElementById('val_tipm').innerText = tipm + " °C";
                         document.getElementById('val_fanipm').innerText = fanIpm === 0 ? "0 °C / Normal" : fanIpm + " °C";
 
+                        // --- GENERATE RAW DUAL LOG FEED OUTPUT ---
                         const timeStr = new Date().toLocaleTimeString();
-                        appendLine(`[${timeStr}] Telemetry received and parsed successfully.`, "");
+                        
+                        const hexColumn = Array.from(rawDataBytes)
+                            .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
+                            .join(' ');
+                            
+                        const asciiColumn = Array.from(rawDataBytes)
+                            .map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.')
+                            .join('');
+
+                        const completeRow = `[${timeStr}] \nHEX:   ${hexColumn}\nASCII: ${asciiColumn}\n--------------------------------------------------------------`;
+                        appendLine(completeRow, "");
                     }
                 }
             };
@@ -164,60 +179,61 @@
                 clearInterval(pingTimer);
                 statusBar.classList.remove('connected');
                 statusDot.classList.remove('connected');
-                statusText.innerText = "Status: Reconnecting to HiveMQ Broker...";
+                statusText.innerText = "Status: Connection Closed. Auto-reconnecting...";
                 setTimeout(connectNativeMQTT, 4000);
             };
         }
 
         function sendMqttConnectPacket() {
-            const cid = "WebHub" + Math.floor(Math.random() * 1000);
-            const enc = new TextEncoder();
-            const bUser = enc.encode(MQTT_USER);
-            const bPass = enc.encode(MQTT_PASS);
-            const bCid = enc.encode(cid);
+            const clientID = "WebClient" + Math.floor(Math.random() * 1000);
+            const encoder = new TextEncoder();
+            const bCid = encoder.encode(clientID);
+            const bUser = encoder.encode(MQTT_USER);
+            const bPass = encoder.encode(MQTT_PASS);
 
             const remLen = 12 + (2 + bCid.length) + (2 + bUser.length) + (2 + bPass.length);
             const pkt = new Uint8Array(2 + remLen);
             
-            let idx = 0;
-            pkt[idx++] = 16; 
-            pkt[idx++] = remLen;
-            pkt[idx++] = 0; pkt[idx++] = 4; 
-            pkt[idx++] = 77; pkt[idx++] = 81; pkt[idx++] = 84; pkt[idx++] = 84; 
-            pkt[idx++] = 4;  
-            pkt[idx++] = 194; 
-            pkt[idx++] = 0; pkt[idx++] = 60; 
-            
-            pkt[idx++] = (bCid.length >> 8); pkt[idx++] = (bCid.length & 255);
-            pkt.set(bCid, idx); idx += bCid.length;
-            
-            pkt[idx++] = (bUser.length >> 8); pkt[idx++] = (bUser.length & 255);
-            pkt.set(bUser, idx); idx += bUser.length;
-            
-            pkt[idx++] = (bPass.length >> 8); pkt[idx++] = (bPass.length & 255);
-            pkt.set(bPass, idx); idx += bPass.length;
+            let i = 0;
+            pkt[i++] = 0x10; 
+            pkt[i++] = remLen;
+            pkt[i++] = 0x00; pkt[i++] = 0x04; 
+            pkt[i++] = 0x4D; pkt[i++] = 0x51; pkt[i++] = 0x54; pkt[i++] = 0x55; // "MQTT"
+            pkt[i++] = 0x04; 
+            pkt[i++] = 0xC2; 
+            pkt[i++] = 0x00; pkt[i++] = 0x3C; 
 
-            ws.send(pkt);
+            pkt[i++] = bCid.length >> 8; pkt[i++] = bCid.length & 255;
+            pkt.set(bCid, i); i += bCid.length;
+
+            pkt[i++] = bUser.length >> 8; pkt[i++] = bUser.length & 255;
+            pkt.set(bUser, i); i += bUser.length;
+
+            pkt[i++] = bPass.length >> 8; pkt[i++] = bPass.length & 255;
+            pkt.set(bPass, i); i += bPass.length;
+
+            if (ws.readyState === 1) ws.send(pkt);
         }
 
         function sendMqttSubscribePacket() {
-            const enc = new TextEncoder();
-            const bTopic = enc.encode(TOPIC_SUBSCRIBE);
+            const encoder = new TextEncoder();
+            const bTopic = encoder.encode(TOPIC_SUBSCRIBE);
             const remLen = 2 + 2 + bTopic.length + 1;
             const pkt = new Uint8Array(2 + remLen);
-            
-            let idx = 0;
-            pkt[idx++] = 130; 
-            pkt[idx++] = remLen;
-            pkt[idx++] = 0; pkt[idx++] = 1; 
-            pkt[idx++] = (bTopic.length >> 8); pkt[idx++] = (bTopic.length & 255);
-            
-            for (var i = 0; i < bTopic.length; i++) {
-                pkt[idx++] = bTopic[i];
-            }
-            pkt[idx++] = 0; 
 
-            ws.send(pkt);
+            let i = 0;
+            pkt[i++] = 0x82; 
+            pkt[i++] = remLen;
+            pkt[i++] = 0x00; pkt[i++] = 0x01; 
+            pkt[i++] = bTopic.length >> 8; pkt[i++] = bTopic.length & 255;
+            pkt.set(bTopic, i); i += bTopic.length;
+            pkt[i++] = 0x00; 
+
+            if (ws.readyState === 1) ws.send(pkt);
+        }
+
+        function sendMqttPingPacket() {
+            if (ws.readyState === 1) ws.send(new Uint8Array([0xC0, 0x00]));
         }
 
         function appendLine(text, cssClass) {
