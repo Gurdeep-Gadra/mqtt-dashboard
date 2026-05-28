@@ -92,7 +92,6 @@
         let ws;
         let pingTimer;
 
-        // RESTORED YOUR EXACT WORKING CONNECTION ENGINE
         function connectNativeMQTT() {
             const url = `wss://${BROKER_HOST}:${WEBSOCKET_PORT}/mqtt`;
             ws = new WebSocket(url, ["mqtt"]); 
@@ -214,7 +213,7 @@
             pkt[idx++] = remLen;
             pkt[idx++] = 0; pkt[idx++] = 1; 
             pkt[idx++] = (bTopic.length >> 8); pkt[idx++] = (bTopic.length & 255);
-            pkt.set(bTopic, i); idx += bTopic.length;
+            pkt.set(bTopic, idx); idx += bTopic.length; // FIXED TYPO: Changed 'i' to 'idx'
             pkt[idx++] = 0; 
 
             ws.send(pkt);
