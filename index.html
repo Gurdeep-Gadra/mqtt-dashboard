@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live MQTT Telemetry Hub</title>
-    <!-- MQTT.js library via official free CDN -->
-    <script src="https://unpkg.com"></script>
+    <!-- Use a highly stable, secure CDN alternative link for the MQTT library -->
+    <script src="https://cloudflare.com" integrity="sha512-Y38CshS9nU++7G09E96pYg8w40b3jZ368FlsatS1SNoAsW0Z53S3pP8bC165vlyL97tS+R6N/bK835wS90/7FA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
         body {
             background-color: #0b0f19;
@@ -110,6 +110,7 @@
             font-size: 13px;
             color: #10b981;
             line-height: 1.6;
+            white-space: pre-wrap; /* Keeps rows from sliding out of viewing boxes */
         }
         .sys-log { color: #6b7280; }
         .sys-err { color: #f87171; }
@@ -144,13 +145,13 @@
 
     <script>
         // =================================================================
-        // CONFIGURATION ZONE: REPLACE THESE VALUES WITH YOUR HIVEMQ DETAILS
+        // CONFIGURATION ZONE: INTEGRATED HIVEMQ SERVER SCHEMATICS
         // =================================================================
-        const BROKER_HOST = "e897bc6d6145492e99f4a7f09df8ffd9.s1.eu.hivemq.cloud"; // <-- Put your HiveMQ Cluster URL here (NO wss://)
-        const WEBSOCKET_PORT = 8884;                  // HiveMQ Secure WebSockets port
-        const MQTT_USER = "Amber_IOT";       // Your HiveMQ broker username
-        const MQTT_PASS = "Amber@123";       // Your HiveMQ broker password
-        const TOPIC_SUBSCRIBE = "TTW/LAB1"; // Your ESP32 MQTT topic
+        const BROKER_HOST = "e897bc6d6145492e99f4a7f09df8ffd9.s1.eu.hivemq.cloud"; 
+        const WEBSOCKET_PORT = 8884;                  
+        const MQTT_USER = "Amber_IOT";       
+        const MQTT_PASS = "Amber@123";       
+        const TOPIC_SUBSCRIBE = "TTW/LAB1"; 
         // =================================================================
 
         // Clock Ticker
@@ -162,20 +163,20 @@
         const statusDot = document.getElementById('status_dot');
         const statusText = document.getElementById('status_text');
         const consoleBox = document.getElementById('console_output');
-                // Corrected URL structure for standard secure WebSockets
+
+        // Formulate connection string string schema
         const connectionUrl = `wss://${BROKER_HOST}:${WEBSOCKET_PORT}`;
 
-        // Connect to HiveMQ Cloud with mandatory path configurations
+        // Connect to HiveMQ Cloud
         const client = mqtt.connect(connectionUrl, {
             username: MQTT_USER,
             password: MQTT_PASS,
-            path: '/mqtt', // <-- CRITICAL: HiveMQ Cloud requires this explicit endpoint path
+            path: '/mqtt', 
             clientId: 'WebDashboard_' + Math.random().toString(16).substr(2, 8),
             clean: true,
             connectTimeout: 5000,
             reconnectPeriod: 1000,
         });
-
 
         client.on('connect', () => {
             statusBar.classList.add('connected');
@@ -191,7 +192,7 @@
             });
         });
 
-                client.on('message', (topic, payload) => {
+        client.on('message', (topic, payload) => {
             const timeStr = new Date().toLocaleTimeString();
             
             // 1. Generate HEX Column (e.g., "41 42 43 09 03")
@@ -199,20 +200,19 @@
                 .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
                 .join(' ');
                 
-            // 2. Generate ASCII Column (replaces hidden/control bytes with a clean dot '.')
+            // 2. Generate ASCII Column (replaces hidden/control bytes with a dot '.')
             const asciiColumn = Array.from(payload)
                 .map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.')
                 .join('');
 
             // 3. Format into a structured, dual-view timeline row
             const completeRow = `[${timeStr}] 
-            HEX:   ${hexColumn.padEnd(48, ' ')} 
-            ASCII: ${asciiColumn}
-            ------------------------------------------------------------------`;
-                        
-                        appendLine(completeRow, "");
-                    });
-
+HEX:   ${hexColumn} 
+ASCII: ${asciiColumn}
+------------------------------------------------------------------`;
+            
+            appendLine(completeRow, "");
+        });
 
         client.on('error', (err) => {
             appendLine(`CLIENT EXCEPTION: ${err.message}`, "sys-err");
