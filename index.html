@@ -105,7 +105,7 @@
                 const payload = new Uint8Array(event.data);
                 if (payload.length === 0) return;
 
-                const packetType = payload >> 4;
+                const packetType = payload[0] >> 4;
 
                 if (packetType === 2) {
                     statusBar.classList.add('connected');
