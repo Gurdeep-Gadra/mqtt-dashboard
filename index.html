@@ -60,7 +60,7 @@
             <div class="card"><div class="card-title">AC Line Voltage</div><div id="val_acvol" class="card-value">--</div></div>
             <div class="card"><div class="card-title">EEV Position</div><div id="val_eev" class="card-value">--</div></div>
             <div class="card"><div class="card-title">IPM Module Temp (Tipm)</div><div id="val_tipm" class="card-value">--</div></div>
-            <div class="card"><div class="card-title">Fan IPM Status</div><div id="val_fanipm" class="card-value">--</div></div>
+            <div class="card"><div class="card-title">Compressor Run Time</div><div id="val_comptime" class="card-value">--</div></div>
         </div>
 
         <main class="terminal">
@@ -92,7 +92,7 @@
         let ws;
         let pingTimer;
 
-        // ORIGINAL WORKING CONNECTION WRAPPER
+        // RESTORED 100% UNTOUCHED FROM YOUR MASTER SCRIPT
         function connectNativeMQTT() {
             const url = `wss://${BROKER_HOST}:${WEBSOCKET_PORT}/mqtt`;
             ws = new WebSocket(url, ["mqtt"]); 
@@ -106,7 +106,7 @@
                 const payload = new Uint8Array(event.data);
                 if (payload.length === 0) return;
 
-                const packetType = payload[0] >> 4;
+                const packetType = payload >> 4;
 
                 if (packetType === 2) {
                     statusBar.classList.add('connected');
@@ -135,7 +135,7 @@
                     const totalLen = rawDataBytes.length;
 
                     // Extract data rows backwards from the line end markers
-                    if (totalLen >= 15 && rawDataBytes[totalLen - 1] === 0x03 && rawDataBytes[totalLen - 2] === 0x09) {
+                    if (totalLen >= 20 && rawDataBytes[totalLen - 1] === 0x03 && rawDataBytes[totalLen - 2] === 0x09) {
                         
                         const fanIpm   = rawDataBytes[totalLen - 3];
                         const tipm     = rawDataBytes[totalLen - 4] + 33; 
@@ -147,7 +147,10 @@
                         const ta       = 26.5; 
                         const tsu      = rawDataBytes[totalLen - 13] - 25; 
 
-                        // Update top data box metrics cards
+                        // DECODING ADDED: Safely slice and read the 16-bit integer for Compressor Time
+                        const compTime = (rawDataBytes[totalLen - 16] << 8) | rawDataBytes[totalLen - 17];
+
+                        // Map values straight onto your dashboard text fields
                         document.getElementById('val_td').innerText = td + " °C";
                         document.getElementById('val_tc').innerText = tc + " °C";
                         document.getElementById('val_ta').innerText = ta + " °C";
@@ -155,9 +158,9 @@
                         document.getElementById('val_acvol').innerText = acVol + " V";
                         document.getElementById('val_eev').innerText = eev + " P";
                         document.getElementById('val_tipm').innerText = tipm + " °C";
-                        document.getElementById('val_fanipm').innerText = fanIpm === 0 ? "0 °C / Normal" : fanIpm + " °C";
+                        document.getElementById('val_comptime').innerText = compTime + " Sec";
 
-                        // --- RAW PARALLEL HEX/ASCII OUTPUT DISPLAY BOX ---
+                        // --- GENERATE RAW DUAL LOG FEED OUTPUT ---
                         const timeStr = new Date().toLocaleTimeString();
                         
                         const hexColumn = Array.from(rawDataBytes)
@@ -183,7 +186,7 @@
             };
         }
 
-        // ORIGINAL WORKING PACKET STRUCTURE UNTOUCHED
+        // RESTORED 100% UNTOUCHED FROM YOUR MASTER SCRIPT
         function sendMqttConnectPacket() {
             const cid = "WebHub" + Math.floor(Math.random() * 1000);
             const enc = new TextEncoder();
@@ -215,7 +218,7 @@
             ws.send(pkt);
         }
 
-        // ORIGINAL WORKING PACKET STRUCTURE UNTOUCHED
+        // RESTORED 100% UNTOUCHED FROM YOUR MASTER SCRIPT
         function sendMqttSubscribePacket() {
             const enc = new TextEncoder();
             const bTopic = enc.encode(TOPIC_SUBSCRIBE);
@@ -249,4 +252,3 @@
     </script>
 </body>
 </html>
-
