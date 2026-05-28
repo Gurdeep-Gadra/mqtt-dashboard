@@ -92,12 +92,6 @@
         let ws;
         let pingTimer;
 
-        // AUTOMATED DEBUG CONSOLE MIRROR ENGINE
-        // Intercepts silent background errors and prints them right onto your screen terminal
-        window.addEventListener('error', function(e) {
-            appendLine(`[DEBUG ENGINE FAULT]: ${e.message} inside ${e.filename} line ${e.lineno}`, "sys-err");
-        });
-
         function connectNativeMQTT() {
             const url = `wss://${BROKER_HOST}:${WEBSOCKET_PORT}/mqtt`;
             ws = new WebSocket(url, ["mqtt"]); 
@@ -139,7 +133,6 @@
                     const rawDataBytes = payload.subarray(idx);
                     const totalLen = rawDataBytes.length;
 
-                    // Extract data rows backwards from the line end markers
                     if (totalLen >= 15 && rawDataBytes[totalLen - 1] === 0x03 && rawDataBytes[totalLen - 2] === 0x09) {
                         
                         const fanIpm   = rawDataBytes[totalLen - 3];
@@ -152,7 +145,6 @@
                         const ta       = 26.5; 
                         const tsu      = rawDataBytes[totalLen - 13] - 25; 
 
-                        // Update dashboard cards
                         document.getElementById('val_td').innerText = td + " °C";
                         document.getElementById('val_tc').innerText = tc + " °C";
                         document.getElementById('val_ta').innerText = ta + " °C";
@@ -162,19 +154,8 @@
                         document.getElementById('val_tipm').innerText = tipm + " °C";
                         document.getElementById('val_fanipm').innerText = fanIpm === 0 ? "0 °C / Normal" : fanIpm + " °C";
 
-                        // --- RAW VIEW DUAL TELEMETRY TIMELINE ---
                         const timeStr = new Date().toLocaleTimeString();
-                        
-                        const hexColumn = Array.from(rawDataBytes)
-                            .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
-                            .join(' ');
-                            
-                        const asciiColumn = Array.from(rawDataBytes)
-                            .map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.')
-                            .join('');
-
-                        const completeRow = `[${timeStr}] \nHEX:   ${hexColumn}\nASCII: ${asciiColumn}\n--------------------------------------------------------------`;
-                        appendLine(completeRow, "");
+                        appendLine(`[${timeStr}] Telemetry received and parsed successfully.`, "");
                     }
                 }
             };
@@ -185,11 +166,6 @@
                 statusDot.classList.remove('connected');
                 statusText.innerText = "Status: Reconnecting to HiveMQ Broker...";
                 setTimeout(connectNativeMQTT, 4000);
-            };
-
-            // ACTIVE NETWORK HOOK: Catches socket routing drop alerts natively
-            ws.onerror = (err) => {
-                appendLine(`[NATIVE WEB PORTAL ERROR]: Secure Socket handshake refused by host cluster connection lines.`, "sys-err");
             };
         }
 
