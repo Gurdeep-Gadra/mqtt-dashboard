@@ -92,7 +92,6 @@
         let ws;
         let pingTimer;
 
-        // RESTORED 100% UNTOUCHED FROM YOUR WORKING SCRIPT
         function connectNativeMQTT() {
             const url = `wss://${BROKER_HOST}:${WEBSOCKET_PORT}/mqtt`;
             ws = new WebSocket(url, ["mqtt"]); 
@@ -134,7 +133,6 @@
                     const rawDataBytes = payload.subarray(idx);
                     const totalLen = rawDataBytes.length;
 
-                    // Extract data rows backwards from the line end markers
                     if (totalLen >= 15 && rawDataBytes[totalLen - 1] === 0x03 && rawDataBytes[totalLen - 2] === 0x09) {
                         
                         const fanIpm   = rawDataBytes[totalLen - 3];
@@ -147,7 +145,6 @@
                         const ta       = 26.5; 
                         const tsu      = rawDataBytes[totalLen - 13] - 25; 
 
-                        // Map values straight onto your dashboard text fields
                         document.getElementById('val_td').innerText = td + " °C";
                         document.getElementById('val_tc').innerText = tc + " °C";
                         document.getElementById('val_ta').innerText = ta + " °C";
@@ -157,7 +154,6 @@
                         document.getElementById('val_tipm').innerText = tipm + " °C";
                         document.getElementById('val_fanipm').innerText = fanIpm === 0 ? "0 °C / Normal" : fanIpm + " °C";
 
-                        // --- GENERATE RAW DUAL LOG FEED OUTPUT ---
                         const timeStr = new Date().toLocaleTimeString();
                         
                         const hexColumn = Array.from(rawDataBytes)
@@ -183,7 +179,6 @@
             };
         }
 
-        // RESTORED 100% UNTOUCHED FROM YOUR WORKING SCRIPT
         function sendMqttConnectPacket() {
             const cid = "WebHub" + Math.floor(Math.random() * 1000);
             const enc = new TextEncoder();
@@ -215,7 +210,6 @@
             ws.send(pkt);
         }
 
-        // RESTORED 100% UNTOUCHED FROM YOUR WORKING SCRIPT
         function sendMqttSubscribePacket() {
             const enc = new TextEncoder();
             const bTopic = enc.encode(TOPIC_SUBSCRIBE);
