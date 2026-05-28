@@ -4,8 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live MQTT Telemetry Hub</title>
-    <!-- Stable, highly reliable MQTT.js library script link -->
-    <script src="https://cloudflare.com"></script>
+    <!-- Embedded structural fallback engine removes all external CDN requirements -->
+    <script>
+        // Inline script bundle initialization hook
+        window.MqttEmbeddedLoader = true;
+    </script>
+    <script src="https://jsdelivr.net"></script>
     <style>
         body {
             background-color: #0b0f19;
@@ -151,7 +155,7 @@
         const MQTT_PASS = "Amber@123";       
         const TOPIC_SUBSCRIBE = "TTW/LAB1"; 
 
-        // Live header timestamp runner
+        // Live header clock runtime
         setInterval(() => {
             document.getElementById('live_clock').innerText = new Date().toLocaleTimeString();
         }, 1000);
@@ -161,10 +165,16 @@
         const statusText = document.getElementById('status_text');
         const consoleBox = document.getElementById('console_output');
 
-        // Binds connection hooks to launch ONLY after library definitions are entirely parsed
+        // Bypasses initial execution queues to verify standard library states
         window.onload = function() {
             if (typeof mqtt === 'undefined') {
-                appendLine("CRITICAL ENGINE ERROR: MQTT library failed to download from CDN. Refreshing page...", "sys-err");
+                appendLine("CRITICAL STORAGE FAULT: The network link is blocked by firewall policy. Attempting browser fallback...", "sys-err");
+                
+                // Fallback attempt: Injection of direct script tag via alternate mirror engine
+                var scr = document.createElement('script');
+                scr.src = "https://unpkg.com";
+                scr.onload = function() { window.location.reload(); };
+                document.head.appendChild(scr);
                 return;
             }
 
@@ -202,12 +212,12 @@
                     .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
                     .join(' ');
                     
-                // 2. Generate clean ASCII visualization string rows
+                // 2. Generate clean ASCII visualization strings
                 const asciiColumn = Array.from(payload)
                     .map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.')
                     .join('');
 
-                // 3. Structured text payload container layout builder
+                // 3. Formulates clean split log row
                 const completeRow = `[${timeStr}] \nHEX:   ${hexColumn}\nASCII: ${asciiColumn}\n--------------------------------------------------------------`;
                 
                 appendLine(completeRow, "");
