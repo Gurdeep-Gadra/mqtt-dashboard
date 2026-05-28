@@ -30,7 +30,7 @@
         .c-yellow { background-color: #f59e0b; }
         .c-green { background-color: #10b981; }
         .terminal-title { color: #4b5563; font-family: monospace; font-size: 12px; margin-left: 10px; }
-        pre { margin: 0; padding: 16px; height: 250px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; font-size: 13px; color: #10b981; line-height: 1.6; white-space: pre-wrap; }
+        pre { margin: 0; padding: 16px; height: 350px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; font-size: 13px; color: #10b981; line-height: 1.6; white-space: pre-wrap; }
         .sys-log { color: #6b7280; }
         .sys-err { color: #f87171; }
     </style>
@@ -105,7 +105,7 @@
                 const payload = new Uint8Array(event.data);
                 if (payload.length === 0) return;
 
-                const packetType = payload[0] >> 4;
+                const packetType = payload >> 4;
 
                 if (packetType === 2) {
                     statusBar.classList.add('connected');
@@ -156,8 +156,19 @@
                         document.getElementById('val_tipm').innerText = tipm + " °C";
                         document.getElementById('val_fanipm').innerText = fanIpm === 0 ? "0 °C / Normal" : fanIpm + " °C";
 
+                        // --- GENERATE RAW DUAL VISUALIZATION FEED ---
                         const timeStr = new Date().toLocaleTimeString();
-                        appendLine(`[${timeStr}] Telemetry received and parsed successfully.`, "");
+                        
+                        const hexColumn = Array.from(rawDataBytes)
+                            .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
+                            .join(' ');
+                            
+                        const asciiColumn = Array.from(rawDataBytes)
+                            .map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.')
+                            .join('');
+
+                        const completeRow = `[${timeStr}] \nHEX:   ${hexColumn}\nASCII: ${asciiColumn}\n--------------------------------------------------------------`;
+                        appendLine(completeRow, "");
                     }
                 }
             };
@@ -213,7 +224,7 @@
             pkt[idx++] = remLen;
             pkt[idx++] = 0; pkt[idx++] = 1; 
             pkt[idx++] = (bTopic.length >> 8); pkt[idx++] = (bTopic.length & 255);
-            pkt.set(bTopic, idx); idx += bTopic.length; // FIXED TYPO: Changed 'i' to 'idx'
+            pkt.set(bTopic, idx); idx += bTopic.length;
             pkt[idx++] = 0; 
 
             ws.send(pkt);
