@@ -162,18 +162,20 @@
         const statusDot = document.getElementById('status_dot');
         const statusText = document.getElementById('status_text');
         const consoleBox = document.getElementById('console_output');
+                // Corrected URL structure for standard secure WebSockets
+        const connectionUrl = `wss://${BROKER_HOST}:${WEBSOCKET_PORT}`;
 
-        const connectionUrl = `wss://${BROKER_HOST}:${WEBSOCKET_PORT}/mqtt`;
-
-        // Connect to HiveMQ Cloud
+        // Connect to HiveMQ Cloud with mandatory path configurations
         const client = mqtt.connect(connectionUrl, {
             username: MQTT_USER,
             password: MQTT_PASS,
+            path: '/mqtt', // <-- CRITICAL: HiveMQ Cloud requires this explicit endpoint path
             clientId: 'WebDashboard_' + Math.random().toString(16).substr(2, 8),
             clean: true,
-            connectTimeout: 4000,
+            connectTimeout: 5000,
             reconnectPeriod: 1000,
         });
+
 
         client.on('connect', () => {
             statusBar.classList.add('connected');
@@ -189,10 +191,28 @@
             });
         });
 
-        client.on('message', (topic, payload) => {
+                client.on('message', (topic, payload) => {
             const timeStr = new Date().toLocaleTimeString();
-            appendLine(`[${timeStr}] Rx Packet: ${payload.toString()}`, "");
-        });
+            
+            // 1. Generate HEX Column (e.g., "41 42 43 09 03")
+            const hexColumn = Array.from(payload)
+                .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
+                .join(' ');
+                
+            // 2. Generate ASCII Column (replaces hidden/control bytes with a clean dot '.')
+            const asciiColumn = Array.from(payload)
+                .map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.')
+                .join('');
+
+            // 3. Format into a structured, dual-view timeline row
+            const completeRow = `[${timeStr}] 
+            HEX:   ${hexColumn.padEnd(48, ' ')} 
+            ASCII: ${asciiColumn}
+            ------------------------------------------------------------------`;
+                        
+                        appendLine(completeRow, "");
+                    });
+
 
         client.on('error', (err) => {
             appendLine(`CLIENT EXCEPTION: ${err.message}`, "sys-err");
