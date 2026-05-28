@@ -5,17 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live MQTT Telemetry Hub</title>
     <style>
-        body { background-color: #0b0f19; color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 24px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 800px; }
-        header { text-align: center; margin-bottom: 30px; }
-        h1 { color: #10b981; font-size: 28px; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 8px 0; }
-        p { color: #9ca3af; margin: 0; font-size: 14px; }
+        body { background-color: #0b0f19; color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
+        .container { width: 100%; max-width: 900px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 25px; }
+        h1 { color: #10b981; font-size: 26px; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 5px 0; }
+        p { color: #9ca3af; margin: 0; font-size: 13px; }
         .status-bar { background-color: #111827; border: 1px solid #f59e0b; color: #f59e0b; padding: 12px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-weight: bold; font-size: 14px; }
         .status-bar.connected { border-color: #10b981; color: #10b981; }
         .status-left { display: flex; align-items: center; gap: 10px; }
         .dot { width: 12px; height: 12px; background-color: #f59e0b; border-radius: 50%; }
         .dot.connected { background-color: #10b981; box-shadow: 0 0 8px #10b981; }
-        .clock { font-family: monospace; color: #9ca3af; }
+        
+        /* Grid Layout for Live Dashboard Parameters */
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .card { background-color: #111827; border: 1px solid #1f2937; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .card-title { color: #9ca3af; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .card-value { color: #00ff66; font-size: 22px; font-family: monospace; font-weight: bold; }
+        
         .terminal { background-color: #000000; border: 1px solid #1f2937; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .terminal-header { background-color: #111827; padding: 10px 16px; border-bottom: 1px solid #1f2937; display: flex; align-items: center; gap: 6px; }
         .circle { width: 12px; height: 12px; border-radius: 50%; }
@@ -23,25 +29,36 @@
         .c-yellow { background-color: #f59e0b; }
         .c-green { background-color: #10b981; }
         .terminal-title { color: #4b5563; font-family: monospace; font-size: 12px; margin-left: 10px; }
-        pre { margin: 0; padding: 16px; height: 420px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; font-size: 13px; color: #10b981; line-height: 1.6; white-space: pre-wrap; }
+        pre { margin: 0; padding: 16px; height: 250px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; font-size: 12px; color: #10b981; line-height: 1.5; white-space: pre-wrap; }
         .sys-log { color: #6b7280; }
-        .sys-err { color: #f87171; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <header>
-            <h1>Live MQTT Telemetry Hub</h1>
-            <p>Real-time telemetry parsed directly from HiveMQ Cloud</p>
+            <h1>MegMeet Live Telemetry Hub</h1>
+            <p>Decoded WebSocket Datastream Engine Parallel Parsing Profile</p>
         </header>
 
         <div id="status_bar" class="status-bar">
             <div class="status-left">
                 <div id="status_dot" class="dot"></div>
-                <span id="status_text">Status: Initializing Dashboard Tunnel Engine...</span>
+                <span id="status_text">Status: Syncing Tunnel Handshaker...</span>
             </div>
             <span id="live_clock" class="clock">00:00:00 AM</span>
+        </div>
+
+        <!-- LIVE METRIC DASHBOARD OVERVIEW PANELS -->
+        <div class="dashboard-grid">
+            <div class="card"><div class="card-title">Discharge Temp (Td)</div><div id="val_td" class="card-value">--</div></div>
+            <div class="card"><div class="card-title">Condenser Temp (Tc)</div><div id="val_tc" class="card-value">--</div></div>
+            <div class="card"><div class="card-title">Ambient Temp (Ta)</div><div id="val_ta" class="card-value">--</div></div>
+            <div class="card"><div class="card-title">Suction Temp (Tsu)</div><div id="val_tsu" class="card-value">--</div></div>
+            <div class="card"><div class="card-title">AC Line Voltage</div><div id="val_acvol" class="card-value">--</div></div>
+            <div class="card"><div class="card-title">EEV Position</div><div id="val_eev" class="card-value">--</div></div>
+            <div class="card"><div class="card-title">IPM Module Temp (Tipm)</div><div id="val_tipm" class="card-value">--</div></div>
+            <div class="card"><div class="card-title">Fan IPM Status</div><div id="val_fanipm" class="card-value">--</div></div>
         </div>
 
         <main class="terminal">
@@ -54,166 +71,3 @@
             <pre id="console_output"></pre>
         </main>
     </div>
-    <script>
-        // --- HIVEMQ SERVER DETAILS ---
-        const BROKER_HOST = "e897bc6d6145492e99f4a7f09df8ffd9.s1.eu.hivemq.cloud"; 
-        const WEBSOCKET_PORT = 8884;                  
-        const MQTT_USER = "Amber_IOT";       
-        const MQTT_PASS = "Amber@123";       
-        const TOPIC_SUBSCRIBE = "TTW/LAB1"; 
-
-        // Live Header Clock
-        setInterval(() => {
-            document.getElementById('live_clock').innerText = new Date().toLocaleTimeString();
-        }, 1000);
-
-        const statusBar = document.getElementById('status_bar');
-        const statusDot = document.getElementById('status_dot');
-        const statusText = document.getElementById('status_text');
-
-        let ws;
-        let pingInterval;
-
-        function initNativeMQTT() {
-            appendLine("SYSTEM LOG: Activating self-contained local connector...", "sys-log");
-            appendLine("SYSTEM LOG: Launching secure tunnel to HiveMQ Cloud cluster...", "sys-log");
-
-            const connectionUrl = `wss://${BROKER_HOST}:${WEBSOCKET_PORT}/mqtt`;
-            
-            ws = new WebSocket(connectionUrl, ["mqtt"]);
-            ws.binaryType = "arraybuffer";
-
-            ws.onopen = () => {
-                appendLine("SYSTEM LOG: Socket channel opened. Handshaking authorization frames...", "sys-log");
-                setTimeout(sendMqttConnectPacket, 150);
-            };
-
-            ws.onmessage = (event) => {
-                const payload = new Uint8Array(event.data);
-                if (payload.length === 0) return;
-
-                const packetType = payload[0] >> 4;
-
-                // 2 = CONNACK (Handshake approved!)
-                if (packetType === 2) {
-                    if (payload[3] === 0) { // Connection accepted check
-                        statusBar.classList.add('connected');
-                        statusDot.classList.add('connected');
-                        statusText.innerText = `Connected: Listening live on [${TOPIC_SUBSCRIBE}]`;
-                        appendLine("SYSTEM LOG: Authorization Approved! Tunnel completely open.", "sys-log");
-                        
-                        sendMqttSubscribePacket();
-                        
-                        clearInterval(pingInterval);
-                        pingInterval = setInterval(sendMqttPingPacket, 20000);
-                    } else {
-                        appendLine(`CRITICAL ERROR: Authorization Denied. Error code: ${payload[3]}`, "sys-err");
-                    }
-                }
-
-                // 3 = PUBLISH packet (ESP32 telemetry received!)
-                if (packetType === 3) {
-                    let idx = 1;
-                    let remLen = 0;
-                    let multiplier = 1;
-
-                    do {
-                        remLen += (payload[idx] & 127) * multiplier;
-                        multiplier *= 128;
-                    } while ((payload[idx++] & 128) !== 0);
-
-                    const topicLen = (payload[idx++] << 8) + payload[idx++];
-                    idx += topicLen; 
-
-                    const rawDataBytes = payload.subarray(idx);
-                    if (rawDataBytes.length === 0) return;
-
-                    const timeStr = new Date().toLocaleTimeString();
-
-                    const hexColumn = Array.from(rawDataBytes).map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
-                    const asciiColumn = Array.from(rawDataBytes).map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.').join('');
-
-                    const completeRow = `[${timeStr}] \nHEX:   ${hexColumn}\nASCII: ${asciiColumn}\n--------------------------------------------------------------`;
-                    appendLine(completeRow, "");
-                }
-            };
-
-            ws.onclose = () => {
-                clearInterval(pingInterval);
-                statusBar.classList.remove('connected');
-                statusDot.classList.remove('connected');
-                statusText.innerText = "Status: Connection Closed. Auto-reconnecting...";
-                setTimeout(initNativeMQTT, 4000); 
-            };
-
-            ws.onerror = (err) => {
-                console.error("Socket Exception Trace: ", err);
-            };
-        }
-
-        function sendMqttConnectPacket() {
-            const clientID = "WebClient" + Math.floor(Math.random() * 1000);
-            const encoder = new TextEncoder();
-            const bCid = encoder.encode(clientID);
-            const bUser = encoder.encode(MQTT_USER);
-            const bPass = encoder.encode(MQTT_PASS);
-
-            const remLen = 12 + (2 + bCid.length) + (2 + bUser.length) + (2 + bPass.length);
-            const pkt = new Uint8Array(2 + remLen);
-            
-            let i = 0;
-            pkt[i++] = 0x10; 
-            pkt[i++] = remLen;
-            pkt[i++] = 0x00; pkt[i++] = 0x04; 
-            pkt[i++] = 0x4D; pkt[i++] = 0x51; pkt[i++] = 0x54; pkt[i++] = 0x54; // "MQTT"
-            pkt[i++] = 0x04; 
-            pkt[i++] = 0xC2; 
-            pkt[i++] = 0x00; pkt[i++] = 0x3C; 
-
-            pkt[i++] = bCid.length >> 8; pkt[i++] = bCid.length & 255;
-            pkt.set(bCid, i); i += bCid.length;
-
-            pkt[i++] = bUser.length >> 8; pkt[i++] = bUser.length & 255;
-            pkt.set(bUser, i); i += bUser.length;
-
-            pkt[i++] = bPass.length >> 8; pkt[i++] = bPass.length & 255;
-            pkt.set(bPass, i); i += bPass.length;
-
-            if (ws.readyState === 1) ws.send(pkt);
-        }
-
-        function sendMqttSubscribePacket() {
-            const encoder = new TextEncoder();
-            const bTopic = encoder.encode(TOPIC_SUBSCRIBE);
-            const remLen = 2 + 2 + bTopic.length + 1;
-            const pkt = new Uint8Array(2 + remLen);
-
-            let i = 0;
-            pkt[i++] = 0x82; 
-            pkt[i++] = remLen;
-            pkt[i++] = 0x00; pkt[i++] = 0x01; 
-            pkt[i++] = bTopic.length >> 8; pkt[i++] = bTopic.length & 255;
-            pkt.set(bTopic, i); i += bTopic.length;
-            pkt[i++] = 0x00; 
-
-            if (ws.readyState === 1) ws.send(pkt);
-        }
-
-        function sendMqttPingPacket() {
-            const pkt = new Uint8Array([0xC0, 0x00]);
-            if (ws.readyState === 1) ws.send(pkt);
-        }
-
-        function appendLine(text, cssClass) {
-            const consoleBox = document.getElementById('console_output');
-            const div = document.createElement('div');
-            if (cssClass) div.className = cssClass;
-            div.innerText = text;
-            consoleBox.appendChild(div);
-            consoleBox.scrollTop = consoleBox.scrollHeight;
-        }
-
-        window.onload = initNativeMQTT;
-    </script>
-</body>
-</html>
