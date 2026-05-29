@@ -137,9 +137,9 @@
                     // Extract data rows backwards from the line end markers
                     if (totalLen >= 15 && rawDataBytes[totalLen - 1] === 0x03 && rawDataBytes[totalLen - 2] === 0x09) {
 
-                        const tc      = (rawDataBytes[54]/2)-30; // Condenser Temp: Index 21 (22nd byte) scales by 0.5
-                        const ta      = (rawDataBytes[51]/2)-30; // Outdoor Ambient Temp: Index 20 (21st byte) scales by 0.5
-                        const tsu     = (rawDataBytes[49]/2)-30; // Suction Temp: Index 23 (24th byte) scales by 0.5
+                        const tc      = (rawDataBytes[54-1]/2)-30; // Condenser Temp: Index 21 (22nd byte) scales by 0.5
+                        const ta      = (rawDataBytes[51-1]/2)-30; // Outdoor Ambient Temp: Index 20 (21st byte) scales by 0.5
+                        const tsu     = (rawDataBytes[49-1]/2)-30; // Suction Temp: Index 23 (24th byte) scales by 0.5
                         
                         // AC Line Voltage: Combined 16-bit Big-Endian value at indices 6 & 7 divided by an internal hardware scaling factor (~19.1)
                         const acVol  = Math.round(((rawDataBytes[6] << 8) | rawDataBytes[7]) / 19.1); 
