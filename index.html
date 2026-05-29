@@ -147,13 +147,13 @@
                         // Electronic Expansion Valve (EEV): Combined 16-bit Big-Endian value at indices 26 & 27
                         const eev    = (rawDataBytes[26] << 8) | rawDataBytes[27]; 
                         
-                        const tipm   = rawDataBytes[24] + 1;    // IPM Temperature: Index 24 (25th byte) with a +1°C calibration offset
-                        const fanIpm = rawDataBytes[25];        // Fan IPM Temperature: Index 25 (26th byte) raw state flag
+                        const tipm   = rawDataBytes[66-1] ;    // IPM Temperature: Index 24 (25th byte) with a +1°C calibration offset
+                        const fanIpm = rawDataBytes[66];        // Fan IPM Temperature: Index 25 (26th byte) raw state flag
                         
                         const td       = rawDataBytes[22] - 31;
 
                         // CORRECTED FRONT INDEX ENGINE MAPPING: Reads strictly from indices 6 and 7 of the raw payload
-                        const CompTime = (rawDataBytes[6] << 8) | rawDataBytes[7];
+                        const CompTime = (rawDataBytes[7-1] << 8) | rawDataBytes[8-1];
 
                         // Update dashboard metrics cards
                         document.getElementById('val_td').innerText = td + " °C";
