@@ -136,16 +136,21 @@
 
                     // Extract data rows backwards from the line end markers
                     if (totalLen >= 15 && rawDataBytes[totalLen - 1] === 0x03 && rawDataBytes[totalLen - 2] === 0x09) {
+
+                        const tc      = rawDataBytes[21] * 0.5; // Condenser Temp: Index 21 (22nd byte) scales by 0.5
+                        const ta      = rawDataBytes[20] * 0.5; // Outdoor Ambient Temp: Index 20 (21st byte) scales by 0.5
+                        const tsu     = rawDataBytes[23] * 0.5; // Suction Temp: Index 23 (24th byte) scales by 0.5
                         
-                        const fanIpm   = rawDataBytes[totalLen - 3];
-                        const tipm     = rawDataBytes[totalLen - 4] + 33; 
-                        const eev      = ((rawDataBytes[totalLen - 5] << 8) | rawDataBytes[totalLen - 6]) * 2 + 6; 
-                        const acVol    = 124; 
+                        // AC Line Voltage: Combined 16-bit Big-Endian value at indices 6 & 7 divided by an internal hardware scaling factor (~19.1)
+                        const acVol  = Math.round(((rawDataBytes[6] << 8) | rawDataBytes[7]) / 19.1); 
+                        
+                        // Electronic Expansion Valve (EEV): Combined 16-bit Big-Endian value at indices 26 & 27
+                        const eev    = (rawDataBytes[26] << 8) | rawDataBytes[27]; 
+                        
+                        const tipm   = rawDataBytes[24] + 1;    // IPM Temperature: Index 24 (25th byte) with a +1°C calibration offset
+                        const fanIpm = rawDataBytes[25];        // Fan IPM Temperature: Index 25 (26th byte) raw state flag
                         
                         const td       = rawDataBytes[22] - 31;
-                        const tc       = rawDataBytes[totalLen - 11] - 89; 
-                        const ta       = 26.5; 
-                        const tsu      = rawDataBytes[totalLen - 13] - 25; 
 
                         // CORRECTED FRONT INDEX ENGINE MAPPING: Reads strictly from indices 6 and 7 of the raw payload
                         const CompTime = (rawDataBytes[6] << 8) | rawDataBytes[7];
