@@ -153,8 +153,8 @@
                         const td       = rawDataBytes[22] - 31;
 
                         // CORRECTED FRONT INDEX ENGINE MAPPING: Reads strictly from indices 6 and 7 of the raw payload
-                        //const CompTime = (rawDataBytes[44-1] << 8) | rawDataBytes[45-1];
-                        const CompTime = (rawDataBytes[45];
+                        const CompTime = (rawDataBytes[42] << 8) | rawDataBytes[43];
+                        //const CompTime = (rawDataBytes[45];
                         //const CompTime2 = (rawDataBytes[44];
                         // Update dashboard metrics cards
                         document.getElementById('val_td').innerText = td + " °C";
