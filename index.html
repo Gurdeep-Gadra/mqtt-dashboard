@@ -137,26 +137,16 @@
                     // Extract data rows backwards from the line end markers
                     if (totalLen >= 15 && rawDataBytes[totalLen-1] === 0xAA){//0x03 && rawDataBytes[totalLen - 2] === 0x09) {
 
-                        const tc      = (rawDataBytes[13]/2)-30; // Condenser Temp: Index 21 (22nd byte) scales by 0.5
-                        const ta      = (rawDataBytes[10]/2)-30; // Outdoor Ambient Temp: Index 20 (21st byte) scales by 0.5
-                        const tsu     = (rawDataBytes[30]/2)-30; // Suction Temp: Index 23 (24th byte) scales by 0.5
-                        
-                        // AC Line Voltage: Combined 16-bit Big-Endian value at indices 6 & 7 divided by an internal hardware scaling factor (~19.1)
+                        const tc      = (rawDataBytes[13]/2)-30; 
+                        const ta      = (rawDataBytes[10]/2)-30;
+                        const tsu     = (rawDataBytes[30]/2)-30; 
                         const acVol  = rawDataBytes[14] *2; 
-                        
-                        // Electronic Expansion Valve (EEV): Combined 16-bit Big-Endian value at indices 26 & 27
                         const eev    = rawDataBytes[24] *2; 
-                        
-                        const tipm   = rawDataBytes[25] ;    // IPM Temperature: Index 24 (25th byte) with a +1°C calibration offset
-                        const fanIpm = rawDataBytes[44];        // Fan IPM Temperature: Index 25 (26th byte) raw state flag
-                        
+                        const tipm   = rawDataBytes[25] ;   
+                        const fanIpm = rawDataBytes[44];   
                         const td       = rawDataBytes[11] - 30;
-
-                        // CORRECTED FRONT INDEX ENGINE MAPPING: Reads strictly from indices 6 and 7 of the raw payload
                         const CompTime = (rawDataBytes[42] << 8) | rawDataBytes[43];
-                        //const CompTime = (rawDataBytes[45];
-                        //const CompTime2 = (rawDataBytes[44];
-                        // Update dashboard metrics cards
+                        
                         document.getElementById('val_td').innerText = td + " °C";
                         document.getElementById('val_tc').innerText = tc + " °C";
                         document.getElementById('val_ta').innerText = ta + " °C";
