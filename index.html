@@ -155,6 +155,7 @@
                         // CORRECTED FRONT INDEX ENGINE MAPPING: Reads strictly from indices 6 and 7 of the raw payload
                         //const CompTime = (rawDataBytes[44-1] << 8) | rawDataBytes[45-1];
                         const CompTime = (rawDataBytes[45];
+                        const CompTime2 = (rawDataBytes[44];
                         // Update dashboard metrics cards
                         document.getElementById('val_td').innerText = td + " °C";
                         document.getElementById('val_tc').innerText = tc + " °C";
@@ -164,7 +165,7 @@
                         document.getElementById('val_eev').innerText = eev + " P";
                         document.getElementById('val_tipm').innerText = tipm + " °C";
                         document.getElementById('val_fanipm').innerText = fanIpm === 0 ? "0 °C / Normal" : fanIpm + " °C";
-                        document.getElementById('Comp_Time').innerText = CompTime + " Sec";
+                        document.getElementById('Comp_Time').innerText = CompTime + " Sec" + CompTime2;
 
                         // --- RAW FEED TERMINAL LOG PIPELINE ---
                         const timeStr = new Date().toLocaleTimeString();
