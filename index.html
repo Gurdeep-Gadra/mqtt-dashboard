@@ -135,7 +135,7 @@
                     const totalLen = rawDataBytes.length;
 
                     // Extract data rows backwards from the line end markers
-                    if (totalLen >= 15 && rawDataBytes[totalLen - 1] === 0x03 && rawDataBytes[totalLen - 2] === 0x09) {
+                    if (totalLen >= 15 && rawDataBytes[totalLen - 1] === 0xAA){//0x03 && rawDataBytes[totalLen - 2] === 0x09) {
 
                         const tc      = (rawDataBytes[54-1]/2)-30; // Condenser Temp: Index 21 (22nd byte) scales by 0.5
                         const ta      = (rawDataBytes[51-1]/2)-30; // Outdoor Ambient Temp: Index 20 (21st byte) scales by 0.5
@@ -153,7 +153,7 @@
                         const td       = rawDataBytes[22] - 31;
 
                         // CORRECTED FRONT INDEX ENGINE MAPPING: Reads strictly from indices 6 and 7 of the raw payload
-                        const CompTime = (rawDataBytes[7-1] << 8) | rawDataBytes[8-1];
+                        const CompTime = (rawDataBytes[44-1] << 8) | rawDataBytes[45-1];
 
                         // Update dashboard metrics cards
                         document.getElementById('val_td').innerText = td + " °C";
